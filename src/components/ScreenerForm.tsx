@@ -35,7 +35,7 @@ export function ScreenerForm({ behaviourId }: { behaviourId: string }) {
       className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-4"
     >
       <div>
-        <h2 className="text-sm font-semibold text-[#333333] dark:text-white">Function screener</h2>
+        <h2 className="text-sm font-semibold text-[#111111] dark:text-white">Function screener</h2>
         <p className="text-xs text-slate-500 mt-1">
           Self-administered, indirect assessment. This is a screening hypothesis only — it is
           not compared against episode data here (that triangulation is a later step you
@@ -53,7 +53,7 @@ export function ScreenerForm({ behaviourId }: { behaviourId: string }) {
                   key={opt}
                   className={`cursor-pointer rounded-md border px-2 py-1 text-xs capitalize ${
                     answers[item.id] === opt
-                      ? 'border-[#333333] dark:border-white bg-[#333333] dark:bg-white text-white dark:text-slate-900'
+                      ? 'border-[#111111] dark:border-white bg-[#111111] dark:bg-white text-white dark:text-slate-900'
                       : 'border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400'
                   }`}
                 >
@@ -76,7 +76,7 @@ export function ScreenerForm({ behaviourId }: { behaviourId: string }) {
         <button
           type="submit"
           disabled={!practitioner || !allAnswered}
-          className="rounded-md bg-[#333333] dark:bg-white text-white dark:text-slate-900 px-4 py-2 text-sm font-medium disabled:opacity-50"
+          className="rounded-md bg-[#111111] dark:bg-white text-white dark:text-slate-900 px-4 py-2 text-sm font-medium disabled:opacity-50"
         >
           Save screener
         </button>

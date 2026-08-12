@@ -71,7 +71,7 @@ export function EpisodeForm({ behaviourId }: { behaviourId: string }) {
       onSubmit={handleSubmit}
       className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-4"
     >
-      <h2 className="text-sm font-semibold text-[#333333] dark:text-white">Log an episode</h2>
+      <h2 className="text-sm font-semibold text-[#111111] dark:text-white">Log an episode</h2>
 
       <div className="grid grid-cols-2 gap-3">
         <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -167,7 +167,7 @@ export function EpisodeForm({ behaviourId }: { behaviourId: string }) {
               key={s.value}
               className={`cursor-pointer rounded-md border px-2 py-1.5 text-xs ${
                 severityRating === s.value
-                  ? 'border-[#333333] dark:border-white bg-[#333333] dark:bg-white text-white dark:text-slate-900'
+                  ? 'border-[#111111] dark:border-white bg-[#111111] dark:bg-white text-white dark:text-slate-900'
                   : 'border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300'
               }`}
             >
@@ -194,7 +194,7 @@ export function EpisodeForm({ behaviourId }: { behaviourId: string }) {
               key={f.value}
               className={`cursor-pointer rounded-md border px-2 py-1.5 text-xs ${
                 frequencyContext === f.value
-                  ? 'border-[#333333] dark:border-white bg-[#333333] dark:bg-white text-white dark:text-slate-900'
+                  ? 'border-[#111111] dark:border-white bg-[#111111] dark:bg-white text-white dark:text-slate-900'
                   : 'border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300'
               }`}
             >
@@ -231,7 +231,7 @@ export function EpisodeForm({ behaviourId }: { behaviourId: string }) {
         <button
           type="submit"
           disabled={!practitioner}
-          className="rounded-md bg-[#333333] dark:bg-white text-white dark:text-slate-900 px-4 py-2 text-sm font-medium disabled:opacity-50"
+          className="rounded-md bg-[#111111] dark:bg-white text-white dark:text-slate-900 px-4 py-2 text-sm font-medium disabled:opacity-50"
         >
           Save episode
         </button>

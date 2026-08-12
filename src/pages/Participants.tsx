@@ -28,10 +28,10 @@ export function Participants() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-[#333333] dark:text-white">Participants</h1>
+        <h1 className="text-xl font-display font-bold text-[#111111] dark:text-white">Participants</h1>
         <button
           onClick={() => setShowForm((v) => !v)}
-          className="rounded-md bg-[#333333] dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-sm font-medium"
+          className="rounded-md bg-[#111111] dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-sm font-medium"
         >
           {showForm ? 'Cancel' : 'Add participant'}
         </button>
@@ -67,7 +67,7 @@ export function Participants() {
           <button
             type="submit"
             disabled={!practitioner}
-            className="rounded-md bg-[#333333] dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+            className="rounded-md bg-[#111111] dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-sm font-medium disabled:opacity-50"
           >
             Save participant
           </button>
@@ -81,7 +81,7 @@ export function Participants() {
         {participants?.map((p) => (
           <li key={p.id}>
             <Link to={`/participants/${p.id}`} className="block p-4 hover:bg-slate-50 dark:hover:bg-slate-800">
-              <div className="font-medium text-[#333333] dark:text-white">{p.identifyingDetails}</div>
+              <div className="font-medium text-[#111111] dark:text-white">{p.identifyingDetails}</div>
               <div className="text-xs text-slate-500">
                 {p.consentAttested ? 'Consent attested' : 'Consent not attested'} · added{' '}
                 {new Date(p.createdAt).toLocaleDateString()}

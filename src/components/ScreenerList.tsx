@@ -17,7 +17,7 @@ export function ScreenerList({ behaviourId }: { behaviourId: string }) {
 
   return (
     <div className="space-y-2">
-      <h2 className="text-sm font-semibold text-[#333333] dark:text-white">
+      <h2 className="text-sm font-semibold text-[#111111] dark:text-white">
         Completed screeners ({screeners.length})
       </h2>
       <ul className="space-y-3">
@@ -29,7 +29,7 @@ export function ScreenerList({ behaviourId }: { behaviourId: string }) {
               className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-2"
             >
               <div className="flex items-center justify-between text-sm">
-                <span className="font-medium text-[#333333] dark:text-white">
+                <span className="font-medium text-[#111111] dark:text-white">
                   {new Date(s.dateCompleted).toLocaleString()}
                 </span>
                 <span className="text-xs text-slate-500">
@@ -43,7 +43,7 @@ export function ScreenerList({ behaviourId }: { behaviourId: string }) {
                     <div className="flex-1 h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                       <div
                         className={`h-full ${
-                          s.domainScores[d] === maxScore && maxScore > 0 ? 'bg-[#333333] dark:bg-white' : 'bg-slate-400 dark:bg-slate-600'
+                          s.domainScores[d] === maxScore && maxScore > 0 ? 'bg-[#111111] dark:bg-white' : 'bg-slate-400 dark:bg-slate-600'
                         }`}
                         style={{ width: `${(s.domainScores[d] / 6) * 100}%` }}
                       />

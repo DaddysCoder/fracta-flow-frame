@@ -1,4 +1,18 @@
 @import 'tailwindcss';
+/* latin-only subsets — this is a local-first PWA, keep the precached font
+   payload small rather than pulling every unicode range fontsource ships. */
+@import '@fontsource/nunito/latin-400.css';
+@import '@fontsource/nunito/latin-600.css';
+@import '@fontsource/nunito/latin-700.css';
+@import '@fontsource/montserrat/latin-700.css';
+
+/* Fracta Flow brand kit §4/§7: Nunito for body/UI, Montserrat 700 reserved
+   for page titles/section headers/the wordmark — used sparingly, not the
+   whole UI, per the kit's own "typography carries hierarchy" principle. */
+@theme {
+  --font-sans: 'Nunito', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Montserrat', system-ui, sans-serif;
+}
 
 :root {
   color-scheme: light dark;
@@ -6,7 +20,7 @@
 
 body {
   margin: 0;
-  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-sans);
 }
 
 #root {

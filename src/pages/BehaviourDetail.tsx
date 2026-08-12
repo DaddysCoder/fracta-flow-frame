@@ -39,7 +39,7 @@ export function BehaviourDetail() {
             ← {participant.identifyingDetails}
           </Link>
         )}
-        <h1 className="text-xl font-semibold text-[#333333] dark:text-white mt-1">{behaviour.name}</h1>
+        <h1 className="text-xl font-display font-bold text-[#111111] dark:text-white mt-1">{behaviour.name}</h1>
         <p className="text-sm text-slate-500 mt-1">{behaviour.operationalDefinition}</p>
       </div>
 
@@ -50,7 +50,7 @@ export function BehaviourDetail() {
             onClick={() => setTab(t)}
             className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
               tab === t
-                ? 'border-[#333333] dark:border-white text-[#333333] dark:text-white'
+                ? 'border-[#111111] dark:border-white text-[#111111] dark:text-white'
                 : 'border-transparent text-slate-500'
             }`}
           >

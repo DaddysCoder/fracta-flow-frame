@@ -40,9 +40,9 @@ export function InformantScreenerPage() {
 
   if (!token || !token.trim()) {
     return (
-      <div className="min-h-svh flex items-center justify-center bg-[#F5F4F2] p-6">
+      <div className="min-h-svh flex items-center justify-center bg-[#F5F5F5] p-6">
         <div className="max-w-sm text-center space-y-2">
-          <h1 className="text-lg font-semibold text-[#333333]">This link isn't ready to use</h1>
+          <h1 className="text-lg font-display font-bold text-[#111111]">This link isn't ready to use</h1>
           <p className="text-sm text-slate-600">
             It's missing the information it needs to work. Ask the practitioner for a fresh QR
             code or link — this one may be incomplete, mistyped, or already used.
@@ -72,9 +72,9 @@ export function InformantScreenerPage() {
 
   if (payloadText) {
     return (
-      <div className="min-h-svh flex items-center justify-center bg-[#F5F4F2] p-6">
+      <div className="min-h-svh flex items-center justify-center bg-[#F5F5F5] p-6">
         <div className="max-w-sm w-full text-center space-y-4">
-          <h1 className="text-lg font-semibold text-[#333333]">Thanks — you're done</h1>
+          <h1 className="text-lg font-display font-bold text-[#111111]">Thanks — you're done</h1>
           <p className="text-sm text-slate-600">
             Show this code to the practitioner so they can scan it into their app.
           </p>
@@ -86,7 +86,7 @@ export function InformantScreenerPage() {
           <details className="text-left text-xs text-slate-500">
             <summary className="cursor-pointer">Can't scan? Copy the code as text instead</summary>
             <textarea readOnly value={payloadText} className="mt-2 w-full rounded border border-slate-300 p-2 font-mono text-[10px]" rows={3} />
-            <button onClick={handleCopy} className="mt-1 rounded bg-[#333333] text-white px-3 py-1 text-xs">
+            <button onClick={handleCopy} className="mt-1 rounded bg-[#111111] text-white px-3 py-1 text-xs">
               {copied ? 'Copied' : 'Copy text'}
             </button>
           </details>
@@ -96,10 +96,10 @@ export function InformantScreenerPage() {
   }
 
   return (
-    <div className="min-h-svh bg-[#F5F4F2] p-4">
+    <div className="min-h-svh bg-[#F5F5F5] p-4">
       <div className="max-w-lg mx-auto space-y-4 py-4">
         <div>
-          <h1 className="text-lg font-semibold text-[#333333]">Behaviour screener</h1>
+          <h1 className="text-lg font-display font-bold text-[#111111]">Behaviour screener</h1>
           <p className="text-sm text-slate-600 mt-1">
             You've been asked (as a {role}) to answer some quick yes/no/unsure questions about a
             behaviour. This takes about 3 minutes. Nothing you enter is sent anywhere — when
@@ -117,7 +117,7 @@ export function InformantScreenerPage() {
                     key={opt}
                     className={`flex-1 text-center cursor-pointer rounded-md border px-2 py-1.5 text-xs capitalize ${
                       answers[item.id] === opt
-                        ? 'border-[#333333] bg-[#333333] text-white'
+                        ? 'border-[#111111] bg-[#111111] text-white'
                         : 'border-slate-300 text-slate-600'
                     }`}
                   >
@@ -139,7 +139,7 @@ export function InformantScreenerPage() {
         <button
           onClick={handleSubmit}
           disabled={!allAnswered}
-          className="w-full rounded-md bg-[#333333] text-white py-3 text-sm font-semibold disabled:opacity-50"
+          className="w-full rounded-md bg-[#111111] text-white py-3 text-sm font-semibold disabled:opacity-50"
         >
           {allAnswered ? 'Finish and show code' : 'Answer all questions to finish'}
         </button>

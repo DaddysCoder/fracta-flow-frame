@@ -81,7 +81,7 @@ export function HypothesisPanel({ behaviourId }: { behaviourId: string }) {
         <button
           onClick={handleRecompute}
           disabled={pending || screenerCount === 0}
-          className="rounded-md bg-[#333333] dark:bg-white text-white dark:text-slate-900 px-4 py-2 text-sm font-medium disabled:opacity-50"
+          className="rounded-md bg-[#111111] dark:bg-white text-white dark:text-slate-900 px-4 py-2 text-sm font-medium disabled:opacity-50"
         >
           {pending ? 'Computing…' : 'Recompute hypothesis'}
         </button>
@@ -113,7 +113,7 @@ export function HypothesisPanel({ behaviourId }: { behaviourId: string }) {
           <dl className="grid grid-cols-2 gap-2 text-sm">
             <div>
               <dt className="text-slate-500">Screener top domain(s)</dt>
-              <dd className="text-[#333333] dark:text-white">
+              <dd className="text-[#111111] dark:text-white">
                 {latest.screenerFunctionResult.length
                   ? latest.screenerFunctionResult.map((d) => DOMAIN_LABELS[d]).join(', ')
                   : '—'}
@@ -121,17 +121,17 @@ export function HypothesisPanel({ behaviourId }: { behaviourId: string }) {
             </div>
             <div>
               <dt className="text-slate-500">Dominant episode pattern</dt>
-              <dd className="text-[#333333] dark:text-white">
+              <dd className="text-[#111111] dark:text-white">
                 {latest.episodePatternResult ? DOMAIN_LABELS[latest.episodePatternResult] : 'No clear pattern'}
               </dd>
             </div>
             <div>
               <dt className="text-slate-500">Episodes considered</dt>
-              <dd className="text-[#333333] dark:text-white">{latest.episodeCount}</dd>
+              <dd className="text-[#111111] dark:text-white">{latest.episodeCount}</dd>
             </div>
             <div>
               <dt className="text-slate-500">Distinct days</dt>
-              <dd className="text-[#333333] dark:text-white">{latest.distinctDayCount}</dd>
+              <dd className="text-[#111111] dark:text-white">{latest.distinctDayCount}</dd>
             </div>
           </dl>
 
@@ -153,7 +153,7 @@ export function HypothesisPanel({ behaviourId }: { behaviourId: string }) {
           {showReceipts && (
             <div className="space-y-3 text-sm border-t border-slate-200 dark:border-slate-800 pt-3">
               <div>
-                <h3 className="font-medium text-[#333333] dark:text-white mb-1">
+                <h3 className="font-medium text-[#111111] dark:text-white mb-1">
                   Screener(s) ({latest.contributingScreenerIds.length})
                 </h3>
                 <ul className="space-y-1 text-slate-600 dark:text-slate-400">
@@ -168,7 +168,7 @@ export function HypothesisPanel({ behaviourId }: { behaviourId: string }) {
                 </ul>
               </div>
               <div>
-                <h3 className="font-medium text-[#333333] dark:text-white mb-1">
+                <h3 className="font-medium text-[#111111] dark:text-white mb-1">
                   Episodes ({latest.contributingEpisodeIds.length})
                 </h3>
                 <ul className="space-y-1 text-slate-600 dark:text-slate-400 max-h-48 overflow-y-auto">

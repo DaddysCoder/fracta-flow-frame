@@ -40,10 +40,10 @@ export function Settings() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-xl font-semibold text-[#333333] dark:text-white">Settings</h1>
+      <h1 className="text-xl font-display font-bold text-[#111111] dark:text-white">Settings</h1>
 
       <section className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">
-        <h2 className="text-sm font-semibold text-[#333333] dark:text-white">Practitioner profile</h2>
+        <h2 className="text-sm font-semibold text-[#111111] dark:text-white">Practitioner profile</h2>
         <form onSubmit={handleSubmit} className="space-y-3">
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
             Name
@@ -63,7 +63,7 @@ export function Settings() {
           </label>
           <button
             type="submit"
-            className="rounded-md bg-[#333333] dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-sm font-medium"
+            className="rounded-md bg-[#111111] dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-sm font-medium"
           >
             Save
           </button>
@@ -71,7 +71,7 @@ export function Settings() {
       </section>
 
       <section className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">
-        <h2 className="text-sm font-semibold text-[#333333] dark:text-white">Data &amp; backup</h2>
+        <h2 className="text-sm font-semibold text-[#111111] dark:text-white">Data &amp; backup</h2>
         <p className="text-sm text-slate-500">
           All data is stored only in this browser (IndexedDB). Nothing is sent to a server.
           Browser storage can be cleared by the OS (especially iOS Safari) — export a backup
@@ -83,7 +83,7 @@ export function Settings() {
         <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={() => exportAllData()}
-            className="rounded-md bg-[#333333] dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-sm font-medium"
+            className="rounded-md bg-[#111111] dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-sm font-medium"
           >
             Export backup (JSON)
           </button>

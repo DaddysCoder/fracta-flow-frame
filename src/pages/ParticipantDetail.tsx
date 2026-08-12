@@ -44,7 +44,7 @@ export function ParticipantDetail() {
         <Link to="/participants" className="text-sm text-slate-500 hover:underline">
           ← Participants
         </Link>
-        <h1 className="text-xl font-semibold text-[#333333] dark:text-white mt-1">
+        <h1 className="text-xl font-display font-bold text-[#111111] dark:text-white mt-1">
           {participant.identifyingDetails}
         </h1>
       </div>
@@ -56,7 +56,7 @@ export function ParticipantDetail() {
             onClick={() => setSection(s)}
             className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
               section === s
-                ? 'border-[#333333] dark:border-white text-[#333333] dark:text-white'
+                ? 'border-[#111111] dark:border-white text-[#111111] dark:text-white'
                 : 'border-transparent text-slate-500'
             }`}
           >
@@ -73,7 +73,7 @@ export function ParticipantDetail() {
             <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Behaviours</h2>
             <button
               onClick={() => setShowForm((v) => !v)}
-              className="rounded-md bg-[#333333] dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-sm font-medium"
+              className="rounded-md bg-[#111111] dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-sm font-medium"
             >
               {showForm ? 'Cancel' : 'Add behaviour'}
             </button>
@@ -104,7 +104,7 @@ export function ParticipantDetail() {
               </label>
               <button
                 type="submit"
-                className="rounded-md bg-[#333333] dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-sm font-medium"
+                className="rounded-md bg-[#111111] dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-sm font-medium"
               >
                 Save behaviour
               </button>
@@ -118,7 +118,7 @@ export function ParticipantDetail() {
             {behaviours?.map((b) => (
               <li key={b.id}>
                 <Link to={`/behaviours/${b.id}`} className="block p-4 hover:bg-slate-50 dark:hover:bg-slate-800">
-                  <div className="font-medium text-[#333333] dark:text-white">{b.name}</div>
+                  <div className="font-medium text-[#111111] dark:text-white">{b.name}</div>
                   <div className="text-xs text-slate-500 line-clamp-1">{b.operationalDefinition}</div>
                 </Link>
               </li>

@@ -13,7 +13,7 @@ export function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold text-[#333333] dark:text-white">Dashboard</h1>
+      <h1 className="text-xl font-display font-bold text-[#111111] dark:text-white">Dashboard</h1>
 
       <DashboardFlagsBanner />
 
@@ -43,7 +43,7 @@ export function Dashboard() {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="font-medium text-[#333333] dark:text-white">{b.name}</div>
+                  <div className="font-medium text-[#111111] dark:text-white">{b.name}</div>
                   <div className="text-xs text-slate-500">{participant?.identifyingDetails}</div>
                 </div>
                 <span className="text-xs text-slate-500">{behaviourEpisodes.length} episode(s)</span>

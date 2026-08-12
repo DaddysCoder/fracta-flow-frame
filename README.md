@@ -1,25 +1,41 @@
-# Primitive AI — FBA Screener
+# Fracta Flow — Behaviour Support, by Primitive AI
 
 A behaviour support practitioner tool combining structured behaviour/episode
 (ABC) logging with a FAST-structured function-of-behaviour screener — local-first,
 decision support only. **Phase 1 (MVP) + Phase 2 (triangulation) + Phase 3
 (escalation & documentation) + Phase 4 (multi-informant QR handoff)** of the
-phased build described in the coding brief, under the Primitive AI brand.
+phased build described in the coding brief, under the Fracta Flow product
+brand (Primitive AI is the parent company).
 
 ### Brand identity
 
-The header/disclaimer wordmark ("Primitiv*e*<sup>AI</sup>") and the
-ink/deep-magenta/paper palette follow the supplied brand guidelines
-(`--ink:#333333`, `--mag:#9D1D5B`, `--lift:#D8579A` on dark, `--paper:#F5F4F2`).
-Per the guidelines' own rule, magenta appears on exactly the wordmark's "e"
-and nowhere else — no magenta headings, rules, or buttons. **No actual SVG
-logo asset was supplied** with the guidelines, only filenames — the
-guidelines explicitly say "don't rebuild the wordmark by typing it, use the
-SVG," which isn't possible without one. `src/components/Wordmark.tsx` is a
-documented, literal fallback: swap in the real SVGs if they become
-available. The informant-facing `/screener` page deliberately carries no
-wordmark — the brief requires it to show no chrome tying it to clinical
-records at all.
+Uses the real Fracta Flow brand kit v2 assets (`public/brand/`): the
+chevron-mark + wordmark lockup (`fracta-flow-lockup-color.svg` /
+`-white.svg` for dark backgrounds), sized favicons, brand purple `#7B2FF7`,
+ink `#111111`, off-white surface `#F5F5F5`, neutral border `#E5E5E5`, muted
+text `#6B6B6B`, Montserrat 700 for page titles, and Nunito for body/UI text
+(self-hosted via `@fontsource`, latin subset only, to keep the local-first
+PWA's precached payload small).
+
+Per the kit's own "one accent, used sparingly" rule — explicitly warning
+against "purple buttons, links, icons, and borders everywhere" — brand
+purple is confined to the logo mark only. This is a deliberate call for a
+list-heavy data app: several UI screens (the flags panel, pending invites)
+render repeated action buttons in a list, where making every one purple
+would violate the kit's own restraint principle immediately. Buttons use
+flat ink fills instead, consistent with the kit's flat-outline-or-fill
+guidance minus the multi-purple-element failure mode.
+
+`src/components/Wordmark.tsx` renders the real lockup SVGs directly (no
+typographic reproduction needed this time — an earlier, incomplete
+"Primitive AI" wordmark guideline doc was superseded by this full kit,
+which shipped real files). The informant-facing `/screener` page
+deliberately carries no wordmark — the brief requires it to show no chrome
+tying it to clinical records at all. Marketing-site assets from the kit
+(hero art, feature blocks, pricing/testimonial cards, 404/empty-state
+illustrations) were left out — this is an in-app product, not a landing
+page, so only the identity elements (logo, favicons, color, type) were
+pulled in.
 
 ## What this is (and isn't)
 

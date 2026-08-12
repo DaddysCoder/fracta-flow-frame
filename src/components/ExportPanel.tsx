@@ -75,7 +75,7 @@ export function ExportPanel({ participantId }: { participantId: string }) {
   return (
     <div className="space-y-4">
       <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">
-        <h2 className="text-sm font-semibold text-[#333333] dark:text-white">Generate documentation</h2>
+        <h2 className="text-sm font-semibold text-[#111111] dark:text-white">Generate documentation</h2>
 
         <div>
           <span className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
@@ -115,7 +115,7 @@ export function ExportPanel({ participantId }: { participantId: string }) {
         <button
           onClick={handleGenerate}
           disabled={!practitioner || selected.size === 0 || generating}
-          className="rounded-md bg-[#333333] dark:bg-white text-white dark:text-slate-900 px-4 py-2 text-sm font-medium disabled:opacity-50"
+          className="rounded-md bg-[#111111] dark:bg-white text-white dark:text-slate-900 px-4 py-2 text-sm font-medium disabled:opacity-50"
         >
           {generating ? 'Generating…' : 'Generate & open'}
         </button>
@@ -125,13 +125,13 @@ export function ExportPanel({ participantId }: { participantId: string }) {
       </div>
 
       <div>
-        <h2 className="text-sm font-semibold text-[#333333] dark:text-white mb-2">Past exports</h2>
+        <h2 className="text-sm font-semibold text-[#111111] dark:text-white mb-2">Past exports</h2>
         {!exports?.length && <p className="text-sm text-slate-500">No exports generated yet.</p>}
         <ul className="divide-y divide-slate-200 dark:divide-slate-800 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
           {exports?.map((exp) => (
             <li key={exp.id} className="p-3 text-sm flex items-center justify-between gap-3">
               <div>
-                <div className="font-medium text-[#333333] dark:text-white">
+                <div className="font-medium text-[#111111] dark:text-white">
                   {FORMAT_OPTIONS.find((f) => f.value === exp.format)?.label ?? exp.format}
                 </div>
                 <div className="text-xs text-slate-500">

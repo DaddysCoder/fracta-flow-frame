@@ -14,14 +14,14 @@ export function EpisodeList({ behaviourId }: { behaviourId: string }) {
 
   return (
     <div className="space-y-2">
-      <h2 className="text-sm font-semibold text-[#333333] dark:text-white">
+      <h2 className="text-sm font-semibold text-[#111111] dark:text-white">
         Episodes ({episodes.length})
       </h2>
       <ul className="divide-y divide-slate-200 dark:divide-slate-800 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
         {episodes.map((ep) => (
           <li key={ep.id} className="p-4 text-sm space-y-1">
             <div className="flex items-center justify-between">
-              <span className="font-medium text-[#333333] dark:text-white">
+              <span className="font-medium text-[#111111] dark:text-white">
                 {new Date(ep.dateTime).toLocaleString()}
               </span>
               <span className="text-xs rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5">

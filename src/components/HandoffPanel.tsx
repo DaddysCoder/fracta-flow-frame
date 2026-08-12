@@ -46,7 +46,7 @@ function GenerateInviteSection({ behaviourId }: { behaviourId: string }) {
 
   return (
     <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">
-      <h2 className="text-sm font-semibold text-[#333333] dark:text-white">Invite someone to complete the screener</h2>
+      <h2 className="text-sm font-semibold text-[#111111] dark:text-white">Invite someone to complete the screener</h2>
       <p className="text-xs text-slate-500">
         No account or app install needed for them — they scan a QR, answer on their own phone,
         and show you a second QR when done. No clinical detail travels through the link.
@@ -76,7 +76,7 @@ function GenerateInviteSection({ behaviourId }: { behaviourId: string }) {
         )}
         <button
           onClick={handleGenerate}
-          className="rounded-md bg-[#333333] dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-sm font-medium"
+          className="rounded-md bg-[#111111] dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-sm font-medium"
         >
           Generate invite QR
         </button>
@@ -112,7 +112,7 @@ function PendingInvitesList({ behaviourId }: { behaviourId: string }) {
       {invites.map((inv) => (
         <li key={inv.id} className="p-3 text-sm flex items-center justify-between gap-3">
           <div>
-            <div className="font-medium text-[#333333] dark:text-white">
+            <div className="font-medium text-[#111111] dark:text-white">
               {inv.informantRole} <span className="text-xs text-slate-400 font-mono">#{inv.token}</span>
             </div>
             <div className="text-xs text-slate-500">
@@ -214,12 +214,12 @@ function ScanImportSection({ behaviourId }: { behaviourId: string }) {
 
   return (
     <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">
-      <h2 className="text-sm font-semibold text-[#333333] dark:text-white">Scan a completed response</h2>
+      <h2 className="text-sm font-semibold text-[#111111] dark:text-white">Scan a completed response</h2>
 
       {!scanning ? (
         <button
           onClick={startCamera}
-          className="rounded-md bg-[#333333] dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-sm font-medium"
+          className="rounded-md bg-[#111111] dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-sm font-medium"
         >
           Start camera scan
         </button>
@@ -245,7 +245,7 @@ function ScanImportSection({ behaviourId }: { behaviourId: string }) {
           <button
             onClick={() => handleDecodedText(pasteText)}
             disabled={!pasteText.trim()}
-            className="rounded-md bg-[#333333] dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+            className="rounded-md bg-[#111111] dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-sm font-medium disabled:opacity-50"
           >
             Import
           </button>
@@ -267,7 +267,7 @@ export function HandoffPanel({ behaviourId }: { behaviourId: string }) {
     <div className="space-y-4">
       <GenerateInviteSection behaviourId={behaviourId} />
       <div>
-        <h2 className="text-sm font-semibold text-[#333333] dark:text-white mb-2">Pending &amp; past invites</h2>
+        <h2 className="text-sm font-semibold text-[#111111] dark:text-white mb-2">Pending &amp; past invites</h2>
         <PendingInvitesList behaviourId={behaviourId} />
       </div>
       <ScanImportSection behaviourId={behaviourId} />

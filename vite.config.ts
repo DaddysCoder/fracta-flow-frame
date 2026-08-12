@@ -11,19 +11,19 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg'],
+      includeAssets: ['favicon.svg', 'apple-touch-icon.svg', 'brand/*.svg'],
       manifest: {
-        name: 'Primitive AI — FBA Screener',
-        short_name: 'FBA Screener',
+        name: 'Fracta Flow — Behaviour Support, by Primitive AI',
+        short_name: 'Fracta Flow',
         description:
           'Behaviour support intake, descriptive data, and function screener — local-first, decision support only.',
-        theme_color: '#333333',
-        background_color: '#F5F4F2',
+        theme_color: '#111111',
+        background_color: '#FFFFFF',
         display: 'standalone',
         start_url: '/',
         icons: [
-          { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
+          { src: 'brand/favicon-192.svg', sizes: '192x192', type: 'image/svg+xml' },
+          { src: 'brand/favicon-512.svg', sizes: '512x512', type: 'image/svg+xml' },
         ],
       },
       workbox: {

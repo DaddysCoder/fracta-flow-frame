@@ -1,28 +1,25 @@
-// Typographic reproduction of the Primitive AI wordmark (brand guidelines
-// §1: neo-grotesque "Primitiv", serif-italic "e" as Euler's number, "AI" as
-// its exponent). No actual SVG logo asset was supplied to this build — the
-// guidelines' own rule ("don't rebuild the wordmark by typing it, use the
-// SVG") can't be followed literally without one, so this is a deliberate,
-// documented fallback built to the same spec. Replace with the real SVG
-// (primitive-ai-primary.svg etc.) if it becomes available.
-//
-// Per §3: deep magenta (#9D1D5B) goes muddy on dark, so it lifts to #D8579A
-// there — the guideline's own reversed-lockup rule. Per the same section,
-// magenta belongs to the fractal and appears on exactly this one letter,
-// never as a heading, rule, or button color anywhere else in this app.
-const SERIF_ITALIC = { fontFamily: 'Georgia, "Times New Roman", serif', fontStyle: 'italic' as const }
-
-export function Wordmark({ className = '' }: { className?: string }) {
+// Real brand asset (Fracta Flow brand kit v2, §2): chevron mark + wordmark
+// lockup, supplied as SVG. Clear space equal to the icon's height is already
+// built into each file's viewBox — placed flush, per the kit's own rule.
+// Light/dark variants toggle via Tailwind's dark: media query rather than a
+// prop, so this always tracks the active color scheme.
+export function Wordmark({ className = '', height = 28 }: { className?: string; height?: number }) {
   return (
-    <span className={`font-sans ${className}`}>
-      Primitiv
-      <i style={{ ...SERIF_ITALIC, color: '#9D1D5B' }} className="dark:hidden">
-        e
-      </i>
-      <i style={{ ...SERIF_ITALIC, color: '#D8579A' }} className="hidden dark:inline">
-        e
-      </i>
-      <sup className="text-[0.6em]">AI</sup>
+    <span className={`inline-flex items-center ${className}`}>
+      <img
+        src="/brand/fracta-flow-lockup-color.svg"
+        alt="Fracta Flow"
+        height={height}
+        className="block dark:hidden"
+        style={{ height }}
+      />
+      <img
+        src="/brand/fracta-flow-lockup-white.svg"
+        alt="Fracta Flow"
+        height={height}
+        className="hidden dark:block"
+        style={{ height }}
+      />
     </span>
   )
 }
