@@ -2,8 +2,8 @@
 
 A behaviour support practitioner tool combining structured behaviour/episode
 (ABC) logging with a FAST-structured function-of-behaviour screener — local-first,
-decision support only. **Phase 1 (MVP)** of the phased build described in the
-coding brief.
+decision support only. **Phase 1 (MVP) + Phase 2 (triangulation)** of the
+phased build described in the coding brief.
 
 ## What this is (and isn't)
 
@@ -39,12 +39,21 @@ this MVP:
 
 ## Regulatory/design constraints baked into this build
 
-- Every computed value (screener domain scores, episode history) shows the
-  inputs that produced it — no black-box scoring.
-- No triangulation, hypothesis, or risk-flag computation exists in this MVP.
-  That's deliberate: Phase 1 only assembles data. Phase 2 adds explicit,
-  on-demand triangulation (screener vs. episode pattern); Phase 3 adds
-  escalation flags. Neither auto-updates in the background.
+- Every computed value (screener domain scores, episode history, the
+  triangulated hypothesis) shows the inputs that produced it — no black-box
+  scoring. The hypothesis view has an explicit "show what fed this
+  computation" receipts panel (Butler v NDIA transparency requirement).
+- Triangulation is **on-demand only** — a practitioner clicks "Recompute
+  hypothesis"; nothing recalculates automatically in the background, on
+  every episode save, or on a timer. This is deliberate: live recomputation
+  risks reading as automated decision-making rather than decision support.
+- The mandatory EFA caveat ("even a full match is not equivalent to
+  confirmation via experimental functional analysis") is shown next to the
+  hypothesis result every time it's displayed, at every confidence tier —
+  never a one-time disclaimer buried in settings.
+- No automatic escalation/acknowledgement workflow exists yet (that's
+  Phase 3) — mismatch/low-confidence results only surface a soft, dismissable
+  nudge toward more data collection or EFA.
 - An unmissable first-use disclaimer ("decision support, not diagnostic")
   must be acknowledged before any other screen is reachable — this is the
   primary liability defence given open, unverified signup.
@@ -52,8 +61,9 @@ this MVP:
   not a managed consent system — the practitioner remains responsible for
   actually obtaining it.
 
-## What's implemented (Phase 1 MVP)
+## What's implemented
 
+**Phase 1 (MVP)**
 - Practitioner profile + first-use disclaimer gate
 - Participant creation with consent attestation
 - Behaviour creation with a required operational definition
@@ -63,11 +73,27 @@ this MVP:
 - Dashboard with per-behaviour severity/frequency trend charts
 - JSON export/import and a backup-overdue reminder banner
 
+**Phase 2 (triangulation)** — new "Triangulation" tab on each behaviour
+- On-demand `FunctionHypothesis` computation: screener top domain(s)
+  (averaged across multiple screeners, with an inter-rater disagreement
+  flag) vs. the dominant episode consequence tag
+- `agreementStatus` (match / partial_match / mismatch / insufficient_data)
+  and `confidenceLevel` (low / moderate / high, anchored to the Idaho SDE
+  and descriptive-assessment conventions, capped when episodes cluster on
+  one day) always shown together, never as a single verdict
+- Tied screener domains and tied episode patterns are treated as ambiguous,
+  never forced to an arbitrary winner
+- Audit/receipts view resolving `contributingEpisodeIds` /
+  `contributingScreenerIds` to actual records
+- Soft escalation nudge (not the automated Phase 3 version) on mismatch or
+  persistent low confidence
+- `src/lib/hypothesis.ts` is a pure, DB-free computation module with a
+  vitest suite (`npm test`) covering every test case in the brief
+
 ## Not yet built (later phases, see brief)
 
-- Phase 2: on-demand triangulation (`FunctionHypothesis`, agreement/
-  confidence)
-- Phase 3: escalation flags (`RiskFlag`) and clinical documentation export
+- Phase 3: automatic escalation flags (`RiskFlag`) with acknowledgement
+  tracking, and clinical documentation export
 - Phase 4: multi-informant screener handoff (QR first, email relay only if
   demand is validated) and BYO-storage sync for ongoing episode logging
 
@@ -78,7 +104,8 @@ npm install
 npm run dev      # http://localhost:5173
 npm run build    # typecheck + production build to dist/
 npm run preview  # serve the production build locally
+npm test         # vitest unit tests (triangulation logic)
 ```
 
 Stack: Vite + React + TypeScript, Tailwind CSS, Dexie (IndexedDB),
-react-router-dom, recharts, vite-plugin-pwa.
+react-router-dom, recharts, vite-plugin-pwa, vitest.

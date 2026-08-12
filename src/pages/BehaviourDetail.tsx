@@ -6,8 +6,9 @@ import { EpisodeForm } from '../components/EpisodeForm'
 import { EpisodeList } from '../components/EpisodeList'
 import { ScreenerForm } from '../components/ScreenerForm'
 import { ScreenerList } from '../components/ScreenerList'
+import { HypothesisPanel } from '../components/HypothesisPanel'
 
-type Tab = 'episodes' | 'screener'
+type Tab = 'episodes' | 'screener' | 'triangulation'
 
 export function BehaviourDetail() {
   const { behaviourId = '' } = useParams()
@@ -33,7 +34,7 @@ export function BehaviourDetail() {
       </div>
 
       <div className="flex gap-1 border-b border-slate-200 dark:border-slate-800">
-        {(['episodes', 'screener'] as Tab[]).map((t) => (
+        {(['episodes', 'screener', 'triangulation'] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -43,7 +44,7 @@ export function BehaviourDetail() {
                 : 'border-transparent text-slate-500'
             }`}
           >
-            {t === 'episodes' ? 'Episode log' : 'Function screener'}
+            {t === 'episodes' ? 'Episode log' : t === 'screener' ? 'Function screener' : 'Triangulation'}
           </button>
         ))}
       </div>
@@ -61,6 +62,8 @@ export function BehaviourDetail() {
           <ScreenerList behaviourId={behaviourId} />
         </div>
       )}
+
+      {tab === 'triangulation' && <HypothesisPanel behaviourId={behaviourId} />}
     </div>
   )
 }

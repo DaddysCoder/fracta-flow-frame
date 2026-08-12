@@ -6,6 +6,7 @@ import type {
   ScreenerResponse,
 } from './types'
 import { scoreDomains } from './screener'
+import { computeHypothesis, type ComputeOutcome } from './hypothesis'
 
 export async function createParticipant(input: {
   identifyingDetails: string
@@ -95,4 +96,25 @@ export async function createScreener(input: {
     createdAt: new Date().toISOString(),
   })
   return id
+}
+
+// On-demand only (brief §3.5) — never called automatically from
+// createEpisode/createScreener. A practitioner explicitly triggers this via
+// the "Recompute" button.
+export async function recomputeHypothesis(behaviourId: string): Promise<ComputeOutcome> {
+  const [episodes, screeners] = await Promise.all([
+    db.episodes.where('behaviourId').equals(behaviourId).toArray(),
+    db.screeners.where('behaviourId').equals(behaviourId).toArray(),
+  ])
+
+  const outcome = computeHypothesis(episodes, screeners)
+  if (outcome.status === 'ok') {
+    await db.hypotheses.add({
+      id: newId(),
+      behaviourId,
+      computedAt: new Date().toISOString(),
+      ...outcome.result,
+    })
+  }
+  return outcome
 }
