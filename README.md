@@ -2,8 +2,9 @@
 
 A behaviour support practitioner tool combining structured behaviour/episode
 (ABC) logging with a FAST-structured function-of-behaviour screener — local-first,
-decision support only. **Phase 1 (MVP) + Phase 2 (triangulation)** of the
-phased build described in the coding brief.
+decision support only. **Phase 1 (MVP) + Phase 2 (triangulation) + Phase 3
+(escalation & documentation)** of the phased build described in the coding
+brief.
 
 ## What this is (and isn't)
 
@@ -51,9 +52,15 @@ this MVP:
   confirmation via experimental functional analysis") is shown next to the
   hypothesis result every time it's displayed, at every confidence tier —
   never a one-time disclaimer buried in settings.
-- No automatic escalation/acknowledgement workflow exists yet (that's
-  Phase 3) — mismatch/low-confidence results only surface a soft, dismissable
-  nudge toward more data collection or EFA.
+- Risk flags never disappear silently: `open → acknowledged → (escalated_to_efa
+  | resolved)` is enforced in the actions layer, not just the UI. Resolving
+  without a note is rejected; there is no dismiss/hide action that leaves no
+  trace, matching the Phase 2 audit-trail principle.
+- No push/background notifications — there's no backend to send them from.
+  Flags are in-app state surfaced when the practitioner opens the app.
+- Documentation exports render to an immutable `contentSnapshot` at
+  generation time (print-friendly HTML, no PDF library). Editing episodes or
+  screeners afterward never changes an already-generated export.
 - An unmissable first-use disclaimer ("decision support, not diagnostic")
   must be acknowledged before any other screen is reachable — this is the
   primary liability defence given open, unverified signup.
@@ -90,10 +97,38 @@ this MVP:
 - `src/lib/hypothesis.ts` is a pure, DB-free computation module with a
   vitest suite (`npm test`) covering every test case in the brief
 
-## Not yet built (later phases, see brief)
+**Phase 3 (escalation & documentation)** — new "Flags" tab per behaviour, a
+dashboard flags banner, and a "Documentation" tab per participant
+- `RiskFlag` auto-triggers, each firing independently so a behaviour can
+  have several open flags at once:
+  - `severity_threshold` — a Severe (3) episode, or 3 consecutive episodes
+    trending upward — fires immediately on episode save
+  - `risk_checklist_item` — any ticked risk checklist item, independent of
+    severity — fires immediately on episode save, the most urgent trigger
+  - `persistent_mismatch` — `mismatch` on 3 *consecutive recomputes* (not
+    3 episodes) — checked when a hypothesis is recomputed
+  - `sustained_low_confidence` — confidence stays `low` despite 8+ logged
+    episodes — checked when a hypothesis is recomputed
+  - Duplicate open flags of the same trigger type are suppressed until the
+    existing one is acknowledged/escalated/resolved
+- Acknowledge → escalate-to-EFA or resolve-with-note workflow, enforced in
+  the actions layer: only open flags can be acknowledged, only acknowledged
+  flags can be escalated or resolved, and resolving without a note throws
+- `src/lib/riskFlags.ts` is a pure, DB-free trigger-check module with a
+  vitest suite covering every test case in the brief (checklist independent
+  of severity, two separate flags from one episode, recompute-count vs.
+  episode-count for `persistent_mismatch`)
+- Three documentation export formats over one shared data pass
+  (`src/lib/documentExport.ts`): `clinical_report` (full detail — episodes,
+  screeners, hypothesis, all flags), `plan_appendix` (condensed, still
+  carries the EFA caveat, unresolved flags only), `staff_training_summary`
+  (leanest — explicitly a stub pending the separate, out-of-scope
+  strategy-library integration)
+- Multi-behaviour export supported (`behaviourIds: string[]`); exports open
+  as print-friendly HTML in a new tab for the browser's native print-to-PDF
 
-- Phase 3: automatic escalation flags (`RiskFlag`) with acknowledgement
-  tracking, and clinical documentation export
+## Not yet built (later phase, see brief)
+
 - Phase 4: multi-informant screener handoff (QR first, email relay only if
   demand is validated) and BYO-storage sync for ongoing episode logging
 
@@ -104,7 +139,7 @@ npm install
 npm run dev      # http://localhost:5173
 npm run build    # typecheck + production build to dist/
 npm run preview  # serve the production build locally
-npm test         # vitest unit tests (triangulation logic)
+npm test         # vitest unit tests (triangulation + risk flag logic)
 ```
 
 Stack: Vite + React + TypeScript, Tailwind CSS, Dexie (IndexedDB),

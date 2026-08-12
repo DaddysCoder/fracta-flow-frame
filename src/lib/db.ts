@@ -1,11 +1,13 @@
 import Dexie, { type EntityTable } from 'dexie'
 import type {
   Behaviour,
+  DocumentationExport,
   Episode,
   FunctionHypothesis,
   FunctionScreener,
   Participant,
   Practitioner,
+  RiskFlag,
 } from './types'
 
 class FbaDatabase extends Dexie {
@@ -15,6 +17,8 @@ class FbaDatabase extends Dexie {
   episodes!: EntityTable<Episode, 'id'>
   screeners!: EntityTable<FunctionScreener, 'id'>
   hypotheses!: EntityTable<FunctionHypothesis, 'id'>
+  riskFlags!: EntityTable<RiskFlag, 'id'>
+  documentationExports!: EntityTable<DocumentationExport, 'id'>
 
   constructor() {
     super('fba-screener')
@@ -27,6 +31,10 @@ class FbaDatabase extends Dexie {
     })
     this.version(2).stores({
       hypotheses: 'id, behaviourId, computedAt',
+    })
+    this.version(3).stores({
+      riskFlags: 'id, behaviourId, status, triggerType, triggeredAt',
+      documentationExports: 'id, participantId, generatedAt',
     })
   }
 }

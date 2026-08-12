@@ -7,8 +7,16 @@ import { EpisodeList } from '../components/EpisodeList'
 import { ScreenerForm } from '../components/ScreenerForm'
 import { ScreenerList } from '../components/ScreenerList'
 import { HypothesisPanel } from '../components/HypothesisPanel'
+import { FlagsPanel } from '../components/FlagsPanel'
 
-type Tab = 'episodes' | 'screener' | 'triangulation'
+type Tab = 'episodes' | 'screener' | 'triangulation' | 'flags'
+
+const TAB_LABEL: Record<Tab, string> = {
+  episodes: 'Episode log',
+  screener: 'Function screener',
+  triangulation: 'Triangulation',
+  flags: 'Flags',
+}
 
 export function BehaviourDetail() {
   const { behaviourId = '' } = useParams()
@@ -34,7 +42,7 @@ export function BehaviourDetail() {
       </div>
 
       <div className="flex gap-1 border-b border-slate-200 dark:border-slate-800">
-        {(['episodes', 'screener', 'triangulation'] as Tab[]).map((t) => (
+        {(['episodes', 'screener', 'triangulation', 'flags'] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -44,7 +52,7 @@ export function BehaviourDetail() {
                 : 'border-transparent text-slate-500'
             }`}
           >
-            {t === 'episodes' ? 'Episode log' : t === 'screener' ? 'Function screener' : 'Triangulation'}
+            {TAB_LABEL[t]}
           </button>
         ))}
       </div>
@@ -64,6 +72,8 @@ export function BehaviourDetail() {
       )}
 
       {tab === 'triangulation' && <HypothesisPanel behaviourId={behaviourId} />}
+
+      {tab === 'flags' && <FlagsPanel behaviourId={behaviourId} />}
     </div>
   )
 }

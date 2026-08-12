@@ -1,5 +1,4 @@
-// Data model — Phase 1 MVP + Phase 2 triangulation (brief §5).
-// RiskFlag/escalation automation is Phase 3 and still not modelled yet.
+// Data model — Phase 1 MVP + Phase 2 triangulation + Phase 3 escalation/documentation (brief §5).
 
 export type AntecedentTag = 'demand' | 'transition' | 'sensory' | 'social' | 'unknown'
 export type ConsequenceTag = 'attention' | 'escape' | 'tangible' | 'automatic' | 'none_observed'
@@ -98,4 +97,38 @@ export interface FunctionHypothesis {
   // Audit trail — required, not optional. Every hypothesis must show its receipts.
   contributingEpisodeIds: string[]
   contributingScreenerIds: string[]
+}
+
+// Phase 3 — escalation & documentation (brief §2).
+
+export type RiskFlagTriggerType =
+  | 'severity_threshold'
+  | 'persistent_mismatch'
+  | 'sustained_low_confidence'
+  | 'risk_checklist_item'
+
+export type RiskFlagStatus = 'open' | 'acknowledged' | 'escalated_to_efa' | 'resolved'
+
+export interface RiskFlag {
+  id: string
+  behaviourId: string
+  triggerType: RiskFlagTriggerType
+  triggerDetail: string // human-readable, e.g. "3 consecutive episodes rated Severe"
+  triggeredAt: string // ISO string, not Date — consistent with the rest of this data model
+  status: RiskFlagStatus
+  acknowledgedBy: string | null // practitioner name — null until acknowledged
+  acknowledgedAt: string | null
+  resolutionNote: string | null
+}
+
+export type DocumentationFormat = 'clinical_report' | 'plan_appendix' | 'staff_training_summary'
+
+export interface DocumentationExport {
+  id: string
+  participantId: string
+  behaviourIds: string[] // supports multi-behaviour exports
+  generatedAt: string // ISO string, not Date — consistent with the rest of this data model
+  generatedBy: string
+  format: DocumentationFormat
+  contentSnapshot: string // fully rendered HTML at generation time — immutable once created
 }

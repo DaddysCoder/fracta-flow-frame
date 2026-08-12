@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { Link } from 'react-router-dom'
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { db } from '../lib/db'
+import { DashboardFlagsBanner } from '../components/DashboardFlagsBanner'
 
 export function Dashboard() {
   const behaviours = useLiveQuery(() => db.behaviours.where('status').equals('active').toArray(), [])
@@ -13,6 +14,8 @@ export function Dashboard() {
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Dashboard</h1>
+
+      <DashboardFlagsBanner />
 
       {behaviours?.length === 0 && (
         <p className="text-sm text-slate-500">
