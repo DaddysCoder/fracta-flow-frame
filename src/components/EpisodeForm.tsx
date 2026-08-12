@@ -1,14 +1,18 @@
 import { type FormEvent, useState } from 'react'
 import { createEpisode } from '../lib/actions'
 import { usePractitioner } from '../lib/practitioner'
+import { useCustomChecklistItems } from '../lib/customChecklistItems'
+import { ChecklistField } from './ChecklistField'
 import {
-  ANTECEDENT_TAGS,
-  CONSEQUENCE_TAGS,
+  ANTECEDENT_ITEMS,
+  CONSEQUENCE_ITEMS,
+  deriveConsequenceTag,
   FREQUENCY_SCALE,
   RISK_FLAG_OPTIONS,
+  SETTING_EVENT_ITEMS,
   SEVERITY_SCALE,
 } from '../lib/scales'
-import type { AntecedentTag, ConsequenceTag, RiskFlagItem } from '../lib/types'
+import type { RiskFlagItem } from '../lib/types'
 
 function nowLocal(): string {
   const d = new Date()
@@ -17,23 +21,44 @@ function nowLocal(): string {
   return d.toISOString().slice(0, 16)
 }
 
+function toggleInList(list: string[], item: string): string[] {
+  return list.includes(item) ? list.filter((i) => i !== item) : [...list, item]
+}
+
 export function EpisodeForm({ behaviourId }: { behaviourId: string }) {
   const practitioner = usePractitioner()
   const [dateTime, setDateTime] = useState(nowLocal())
   const [durationMinutes, setDurationMinutes] = useState('')
   const [severityRating, setSeverityRating] = useState<0 | 1 | 2 | 3>(0)
   const [frequencyContext, setFrequencyContext] = useState<0 | 1 | 2 | 3 | 4>(0)
+
   const [settingEvent, setSettingEvent] = useState('')
+  const [settingEventTags, setSettingEventTags] = useState<string[]>([])
+  const [customSettingEvents, addCustomSettingEvent] = useCustomChecklistItems(
+    'fba-screener:custom-setting-events',
+  )
+
   const [antecedentText, setAntecedentText] = useState('')
-  const [antecedentTag, setAntecedentTag] = useState<AntecedentTag>('unknown')
+  const [antecedentTags, setAntecedentTags] = useState<string[]>([])
+  const [customAntecedents, addCustomAntecedent] = useCustomChecklistItems('fba-screener:custom-antecedents')
+
   const [consequenceText, setConsequenceText] = useState('')
-  const [consequenceTag, setConsequenceTag] = useState<ConsequenceTag>('none_observed')
+  const [consequenceTags, setConsequenceTags] = useState<string[]>([])
+  const [customConsequences, addCustomConsequence] = useCustomChecklistItems(
+    'fba-screener:custom-consequences',
+  )
+
   const [riskFlags, setRiskFlags] = useState<RiskFlagItem[]>([])
   const [saved, setSaved] = useState(false)
 
   function toggleRiskFlag(flag: RiskFlagItem) {
     setRiskFlags((prev) => (prev.includes(flag) ? prev.filter((f) => f !== flag) : [...prev, flag]))
   }
+
+  const settingEventItems = [...SETTING_EVENT_ITEMS, ...customSettingEvents]
+  const antecedentItems = [...ANTECEDENT_ITEMS, ...customAntecedents]
+  const consequenceItems = [...CONSEQUENCE_ITEMS.map((c) => c.label), ...customConsequences]
+  const derivedConsequenceTag = deriveConsequenceTag(consequenceTags)
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -45,10 +70,11 @@ export function EpisodeForm({ behaviourId }: { behaviourId: string }) {
       severityRating,
       frequencyContext,
       settingEvent,
+      settingEventTags,
       antecedentText,
-      antecedentTag,
+      antecedentTags,
       consequenceText,
-      consequenceTag,
+      consequenceTags,
       riskFlags,
       loggedBy: practitioner.name,
     })
@@ -57,10 +83,11 @@ export function EpisodeForm({ behaviourId }: { behaviourId: string }) {
     setSeverityRating(0)
     setFrequencyContext(0)
     setSettingEvent('')
+    setSettingEventTags([])
     setAntecedentText('')
-    setAntecedentTag('unknown')
+    setAntecedentTags([])
     setConsequenceText('')
-    setConsequenceTag('none_observed')
+    setConsequenceTags([])
     setRiskFlags([])
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
@@ -97,7 +124,7 @@ export function EpisodeForm({ behaviourId }: { behaviourId: string }) {
       </div>
 
       <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-        Setting event
+        Setting event (free text)
         <input
           value={settingEvent}
           onChange={(e) => setSettingEvent(e.target.value)}
@@ -105,11 +132,21 @@ export function EpisodeForm({ behaviourId }: { behaviourId: string }) {
           className="mt-1 block w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm"
         />
       </label>
+      <ChecklistField
+        label="Setting events (select any that apply)"
+        items={settingEventItems}
+        selected={settingEventTags}
+        onToggle={(item) => setSettingEventTags((prev) => toggleInList(prev, item))}
+        onAddCustom={(item) => {
+          addCustomSettingEvent(item)
+          setSettingEventTags((prev) => [...prev, item])
+        }}
+      />
 
       <div className="grid grid-cols-2 gap-3">
-        <div>
+        <div className="space-y-2">
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-            Antecedent
+            Antecedent (free text)
             <textarea
               required
               value={antecedentText}
@@ -119,21 +156,20 @@ export function EpisodeForm({ behaviourId }: { behaviourId: string }) {
               placeholder="What happened immediately before"
             />
           </label>
-          <select
-            value={antecedentTag}
-            onChange={(e) => setAntecedentTag(e.target.value as AntecedentTag)}
-            className="mt-2 block w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-2 py-1.5 text-sm"
-          >
-            {ANTECEDENT_TAGS.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
-              </option>
-            ))}
-          </select>
+          <ChecklistField
+            label="Antecedents/triggers"
+            items={antecedentItems}
+            selected={antecedentTags}
+            onToggle={(item) => setAntecedentTags((prev) => toggleInList(prev, item))}
+            onAddCustom={(item) => {
+              addCustomAntecedent(item)
+              setAntecedentTags((prev) => [...prev, item])
+            }}
+          />
         </div>
-        <div>
+        <div className="space-y-2">
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-            Consequence
+            Consequence (free text)
             <textarea
               required
               value={consequenceText}
@@ -143,17 +179,20 @@ export function EpisodeForm({ behaviourId }: { behaviourId: string }) {
               placeholder="What happened immediately after"
             />
           </label>
-          <select
-            value={consequenceTag}
-            onChange={(e) => setConsequenceTag(e.target.value as ConsequenceTag)}
-            className="mt-2 block w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-2 py-1.5 text-sm"
-          >
-            {CONSEQUENCE_TAGS.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
-              </option>
-            ))}
-          </select>
+          <ChecklistField
+            label="Consequences"
+            items={consequenceItems}
+            selected={consequenceTags}
+            onToggle={(item) => setConsequenceTags((prev) => toggleInList(prev, item))}
+            onAddCustom={(item) => {
+              addCustomConsequence(item)
+              setConsequenceTags((prev) => [...prev, item])
+            }}
+          />
+          <p className="text-xs text-slate-400">
+            Rolls up to function domain: <span className="font-medium">{derivedConsequenceTag}</span>
+            {consequenceTags.length === 0 && ' (no consequence selected yet)'}
+          </p>
         </div>
       </div>
 

@@ -114,7 +114,7 @@ function episodesTable(episodes: Episode[]): string {
           <tr>
             <td>${escapeHtml(fmtDateTime(e.dateTime))}</td>
             <td>${e.severityRating} — ${escapeHtml(SEVERITY_SCALE[e.severityRating].label)}</td>
-            <td>${escapeHtml(e.antecedentText)} <em>(${escapeHtml(e.antecedentTag)})</em></td>
+            <td>${escapeHtml(e.antecedentText)}${e.antecedentTags.length ? ` <em>(${escapeHtml(e.antecedentTags.join(', '))})</em>` : ''}</td>
             <td>${escapeHtml(e.consequenceText)} <em>(${escapeHtml(e.consequenceTag)})</em></td>
             <td>${e.riskFlags.length ? escapeHtml(e.riskFlags.join(', ')) : '—'}</td>
           </tr>`,
@@ -145,7 +145,7 @@ function screenersSection(screeners: FunctionScreener[]): string {
 function topSettingEvents(episodes: Episode[]): string {
   const counts = new Map<string, number>()
   for (const e of episodes) {
-    const key = e.settingEvent.trim() || e.antecedentTag
+    const key = e.settingEvent.trim() || e.settingEventTags[0] || e.antecedentTags[0] || 'Unspecified'
     counts.set(key, (counts.get(key) ?? 0) + 1)
   }
   const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5)

@@ -1,6 +1,6 @@
 import { type FormEvent, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { db } from '../lib/db'
 import { createParticipant } from '../lib/actions'
 import { usePractitioner } from '../lib/practitioner'
@@ -8,6 +8,7 @@ import { usePractitioner } from '../lib/practitioner'
 export function Participants() {
   const participants = useLiveQuery(() => db.participants.orderBy('createdAt').reverse().toArray(), [])
   const practitioner = usePractitioner()
+  const navigate = useNavigate()
   const [identifyingDetails, setIdentifyingDetails] = useState('')
   const [consent, setConsent] = useState(false)
   const [showForm, setShowForm] = useState(false)
@@ -15,14 +16,14 @@ export function Participants() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!practitioner) return
-    await createParticipant({
+    const id = await createParticipant({
       identifyingDetails,
       consentAttested: consent,
       practitionerName: practitioner.name,
     })
-    setIdentifyingDetails('')
-    setConsent(false)
-    setShowForm(false)
+    // Land straight in "Add behaviour" for the new participant (brief §1) —
+    // don't leave the practitioner to figure out where to go next.
+    navigate(`/participants/${id}`, { state: { openBehaviourForm: true } })
   }
 
   return (

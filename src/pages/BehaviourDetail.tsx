@@ -9,11 +9,14 @@ import { ScreenerList } from '../components/ScreenerList'
 import { HypothesisPanel } from '../components/HypothesisPanel'
 import { FlagsPanel } from '../components/FlagsPanel'
 import { HandoffPanel } from '../components/HandoffPanel'
+import { FormulationForm } from '../components/FormulationForm'
+import { FormulationList } from '../components/FormulationList'
 
-type Tab = 'episodes' | 'screener' | 'triangulation' | 'flags' | 'handoff'
+type Tab = 'episodes' | 'formulation' | 'screener' | 'triangulation' | 'flags' | 'handoff'
 
 const TAB_LABEL: Record<Tab, string> = {
   episodes: 'Episode log',
+  formulation: 'Formulation',
   screener: 'Function screener',
   triangulation: 'Triangulation',
   flags: 'Flags',
@@ -41,10 +44,13 @@ export function BehaviourDetail() {
         )}
         <h1 className="text-xl font-display font-bold text-[#111111] dark:text-white mt-1">{behaviour.name}</h1>
         <p className="text-sm text-slate-500 mt-1">{behaviour.operationalDefinition}</p>
+        {behaviour.concernCategories.length > 0 && (
+          <p className="text-xs text-slate-400 mt-1">{behaviour.concernCategories.join(', ')}</p>
+        )}
       </div>
 
-      <div className="flex gap-1 border-b border-slate-200 dark:border-slate-800">
-        {(['episodes', 'screener', 'triangulation', 'flags', 'handoff'] as Tab[]).map((t) => (
+      <div className="flex gap-1 border-b border-slate-200 dark:border-slate-800 flex-wrap">
+        {(['episodes', 'formulation', 'screener', 'triangulation', 'flags', 'handoff'] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -63,6 +69,13 @@ export function BehaviourDetail() {
         <div className="space-y-6">
           <EpisodeForm behaviourId={behaviourId} />
           <EpisodeList behaviourId={behaviourId} />
+        </div>
+      )}
+
+      {tab === 'formulation' && (
+        <div className="space-y-6">
+          <FormulationForm behaviourId={behaviourId} />
+          <FormulationList behaviourId={behaviourId} />
         </div>
       )}
 

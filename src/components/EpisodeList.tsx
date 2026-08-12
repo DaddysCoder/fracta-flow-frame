@@ -28,11 +28,20 @@ export function EpisodeList({ behaviourId }: { behaviourId: string }) {
                 Severity {ep.severityRating} — {SEVERITY_SCALE[ep.severityRating].label}
               </span>
             </div>
+            {ep.settingEventTags.length > 0 && (
+              <p className="text-xs text-slate-500">Setting events: {ep.settingEventTags.join(', ')}</p>
+            )}
             <p className="text-slate-600 dark:text-slate-400">
-              <span className="font-medium">Antecedent ({ep.antecedentTag}):</span> {ep.antecedentText}
+              <span className="font-medium">Antecedent:</span> {ep.antecedentText}
+              {ep.antecedentTags.length > 0 && (
+                <span className="text-slate-400"> ({ep.antecedentTags.join(', ')})</span>
+              )}
             </p>
             <p className="text-slate-600 dark:text-slate-400">
               <span className="font-medium">Consequence ({ep.consequenceTag}):</span> {ep.consequenceText}
+              {ep.consequenceTags.length > 0 && (
+                <span className="text-slate-400"> ({ep.consequenceTags.join(', ')})</span>
+              )}
             </p>
             {ep.riskFlags.length > 0 && (
               <p className="text-xs text-red-600 dark:text-red-400">Risk: {ep.riskFlags.join(', ')}</p>

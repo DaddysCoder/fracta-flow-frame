@@ -1,12 +1,7 @@
 import { db, newId } from './db'
-import type {
-  AntecedentTag,
-  ConsequenceTag,
-  DocumentationFormat,
-  RiskFlagItem,
-  ScreenerResponse,
-} from './types'
+import type { DocumentationFormat, RiskFlagItem, ScreenerResponse } from './types'
 import { scoreDomains } from './screener'
+import { deriveConsequenceTag } from './scales'
 import { computeHypothesis, type ComputeOutcome } from './hypothesis'
 import { checkEpisodeTriggers, checkHypothesisTriggers, type FlagCandidate } from './riskFlags'
 import { renderDocumentationExport } from './documentExport'
@@ -33,6 +28,7 @@ export async function createBehaviour(input: {
   participantId: string
   name: string
   operationalDefinition: string
+  concernCategories: string[]
   createdBy: string
 }) {
   const id = newId()
@@ -41,6 +37,7 @@ export async function createBehaviour(input: {
     participantId: input.participantId,
     name: input.name.trim(),
     operationalDefinition: input.operationalDefinition.trim(),
+    concernCategories: input.concernCategories,
     status: 'active',
     createdBy: input.createdBy,
     createdAt: new Date().toISOString(),
@@ -55,10 +52,11 @@ export async function createEpisode(input: {
   severityRating: 0 | 1 | 2 | 3
   frequencyContext: 0 | 1 | 2 | 3 | 4
   settingEvent: string
+  settingEventTags: string[]
   antecedentText: string
-  antecedentTag: AntecedentTag
+  antecedentTags: string[]
   consequenceText: string
-  consequenceTag: ConsequenceTag
+  consequenceTags: string[]
   riskFlags: RiskFlagItem[]
   loggedBy: string
 }) {
@@ -71,10 +69,15 @@ export async function createEpisode(input: {
     severityRating: input.severityRating,
     frequencyContext: input.frequencyContext,
     settingEvent: input.settingEvent.trim(),
+    settingEventTags: input.settingEventTags,
     antecedentText: input.antecedentText.trim(),
-    antecedentTag: input.antecedentTag,
+    antecedentTags: input.antecedentTags,
     consequenceText: input.consequenceText.trim(),
-    consequenceTag: input.consequenceTag,
+    consequenceTags: input.consequenceTags,
+    // Derived/rollup — never taken directly from the caller. hypothesis.ts
+    // depends on this staying exactly one FAST domain or 'none_observed'
+    // (brief §4 hard constraint).
+    consequenceTag: deriveConsequenceTag(input.consequenceTags),
     loggedBy: input.loggedBy,
     riskFlags: input.riskFlags,
     createdAt: new Date().toISOString(),
@@ -307,4 +310,36 @@ export async function importScreenerResponse(input: {
 
     return { status: 'ok' as const, screenerId, behaviourId: invite.behaviourId }
   })
+}
+
+// Phase 1.1 — structured interview / initial-assessment mode (brief §3).
+// Supports multiple records per behaviour; none of these fields ever feed
+// hypothesis.ts (frequencyImpression in particular is an interview-stage
+// impression, not a substitute for real logged Episode data).
+export async function createFormulation(input: {
+  behaviourId: string
+  conductedBy: string
+  descriptionRecentExample: string
+  descriptionIntenseEpisode: string
+  descriptionAntecedentAndResponse: string
+  onset: string
+  frequencyImpression: string
+  riskScenarioHigh: string
+  riskScenarioLow: string
+}) {
+  const id = newId()
+  await db.formulations.add({
+    id,
+    behaviourId: input.behaviourId,
+    conductedBy: input.conductedBy,
+    conductedAt: new Date().toISOString(),
+    descriptionRecentExample: input.descriptionRecentExample.trim(),
+    descriptionIntenseEpisode: input.descriptionIntenseEpisode.trim(),
+    descriptionAntecedentAndResponse: input.descriptionAntecedentAndResponse.trim(),
+    onset: input.onset.trim(),
+    frequencyImpression: input.frequencyImpression.trim(),
+    riskScenarioHigh: input.riskScenarioHigh.trim(),
+    riskScenarioLow: input.riskScenarioLow.trim(),
+  })
+  return id
 }

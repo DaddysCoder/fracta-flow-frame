@@ -1,6 +1,5 @@
 // Data model — Phase 1 MVP + Phase 2 triangulation + Phase 3 escalation/documentation (brief §5).
 
-export type AntecedentTag = 'demand' | 'transition' | 'sensory' | 'social' | 'unknown'
 export type ConsequenceTag = 'attention' | 'escape' | 'tangible' | 'automatic' | 'none_observed'
 export type RiskFlagItem = 'injury' | 'property_damage' | 'elopement' | 'self_injury' | 'other'
 export type ScreenerDomain = 'attention' | 'escape' | 'tangible' | 'automatic'
@@ -27,8 +26,9 @@ export interface Participant {
 export interface Behaviour {
   id: string
   participantId: string
-  name: string
+  name: string // short label — categories below are additive, not a replacement
   operationalDefinition: string // required — observable/measurable, no interpretation
+  concernCategories: string[] // standard PBS/ABA categories + any "Other" free text added
   status: 'active' | 'archived'
   createdBy: string
   createdAt: string
@@ -41,10 +41,16 @@ export interface Episode {
   durationMinutes: number | null
   severityRating: 0 | 1 | 2 | 3
   frequencyContext: 0 | 1 | 2 | 3 | 4
-  settingEvent: string
-  antecedentText: string
-  antecedentTag: AntecedentTag
-  consequenceText: string
+  settingEvent: string // free text, kept alongside the checklist below
+  settingEventTags: string[] // checklist selections (+ any "Other" additions)
+  antecedentText: string // free text, kept alongside the checklist below
+  antecedentTags: string[] // checklist selections (+ any "Other" additions)
+  consequenceText: string // free text, kept alongside the checklist below
+  consequenceTags: string[] // checklist selections (+ any "Other" additions)
+  // Derived/rollup — computed from consequenceTags, never edited directly.
+  // hypothesis.ts depends on this being exactly one FAST domain (or
+  // 'none_observed'); it must keep working even though the UI now captures
+  // richer multi-select detail underneath it (brief §4).
   consequenceTag: ConsequenceTag
   loggedBy: string
   riskFlags: RiskFlagItem[]
@@ -144,4 +150,25 @@ export interface ScreenerInvite {
   informantRole: string // e.g. "support worker", "parent", "sibling"
   createdAt: string // ISO string, not Date — consistent with the rest of this data model
   status: ScreenerInviteStatus
+}
+
+// Phase 1.1 — structured interview / initial-assessment mode (brief §3).
+// Used once, early, per behaviour — distinct from the ongoing per-incident
+// Episode log. Every field is guided-prompt free text, none required; the
+// prompt is scaffolding for the conversation, not a form the interviewee
+// fills in field-by-field.
+export interface FormulationRecord {
+  id: string
+  behaviourId: string
+  conductedBy: string
+  conductedAt: string // ISO string, not Date — consistent with the rest of this data model
+  descriptionRecentExample: string
+  descriptionIntenseEpisode: string
+  descriptionAntecedentAndResponse: string
+  onset: string
+  // Interview-stage impression only. Must NEVER feed hypothesis.ts's
+  // confidence calculation — that stays driven only by real logged Episodes.
+  frequencyImpression: string
+  riskScenarioHigh: string
+  riskScenarioLow: string
 }

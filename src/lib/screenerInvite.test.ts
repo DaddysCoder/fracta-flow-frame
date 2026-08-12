@@ -24,6 +24,7 @@ async function setupBehaviour(): Promise<string> {
     participantId,
     name: 'Test behaviour',
     operationalDefinition: 'Observable definition',
+    concernCategories: [],
     createdBy: 'Tester',
   })
 }

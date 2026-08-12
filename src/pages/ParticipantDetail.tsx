@@ -1,15 +1,18 @@
 import { type FormEvent, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { db } from '../lib/db'
 import { createBehaviour } from '../lib/actions'
 import { usePractitioner } from '../lib/practitioner'
 import { ExportPanel } from '../components/ExportPanel'
+import { BEHAVIOUR_CONCERN_CATEGORIES } from '../lib/scales'
 
 type Section = 'behaviours' | 'documentation'
 
 export function ParticipantDetail() {
   const { participantId = '' } = useParams()
+  const location = useLocation()
+  const navigate = useNavigate()
   const participant = useLiveQuery(() => db.participants.get(participantId), [participantId])
   const behaviours = useLiveQuery(
     () => db.behaviours.where('participantId').equals(participantId).reverse().sortBy('createdAt'),
@@ -19,21 +22,41 @@ export function ParticipantDetail() {
 
   const [name, setName] = useState('')
   const [operationalDefinition, setOperationalDefinition] = useState('')
-  const [showForm, setShowForm] = useState(false)
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set())
+  const [otherCategory, setOtherCategory] = useState('')
+  const [showOtherCategory, setShowOtherCategory] = useState(false)
+  // Landed here straight from "Save participant" (brief §1) — open the form
+  // immediately instead of leaving the practitioner to click it themselves.
+  const [showForm, setShowForm] = useState(
+    () => (location.state as { openBehaviourForm?: boolean } | null)?.openBehaviourForm ?? false,
+  )
   const [section, setSection] = useState<Section>('behaviours')
+
+  function toggleCategory(category: string) {
+    setSelectedCategories((prev) => {
+      const next = new Set(prev)
+      if (next.has(category)) next.delete(category)
+      else next.add(category)
+      return next
+    })
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!practitioner) return
-    await createBehaviour({
+    const categories = [...selectedCategories]
+    if (showOtherCategory && otherCategory.trim()) categories.push(otherCategory.trim())
+
+    const id = await createBehaviour({
       participantId,
       name,
       operationalDefinition,
+      concernCategories: categories,
       createdBy: practitioner.name,
     })
-    setName('')
-    setOperationalDefinition('')
-    setShowForm(false)
+    // Land directly in episode logging (brief §1) — don't send the
+    // practitioner back to a list requiring another click to re-enter it.
+    navigate(`/behaviours/${id}`)
   }
 
   if (!participant) return <p className="text-sm text-slate-500">Loading…</p>
@@ -102,6 +125,39 @@ export function ParticipantDetail() {
                   placeholder="Observable, measurable description — no interpretation of intent or cause"
                 />
               </label>
+              <div>
+                <span className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+                  Behaviours of concern (optional, in addition to the name above)
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
+                  {BEHAVIOUR_CONCERN_CATEGORIES.map((category) => (
+                    <label key={category} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                      <input
+                        type="checkbox"
+                        checked={selectedCategories.has(category)}
+                        onChange={() => toggleCategory(category)}
+                      />
+                      {category}
+                    </label>
+                  ))}
+                  <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                    <input
+                      type="checkbox"
+                      checked={showOtherCategory}
+                      onChange={(e) => setShowOtherCategory(e.target.checked)}
+                    />
+                    Other
+                  </label>
+                </div>
+                {showOtherCategory && (
+                  <input
+                    value={otherCategory}
+                    onChange={(e) => setOtherCategory(e.target.value)}
+                    placeholder="Describe the category"
+                    className="mt-2 block w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm"
+                  />
+                )}
+              </div>
               <button
                 type="submit"
                 className="rounded-md bg-[#111111] dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-sm font-medium"
@@ -120,6 +176,9 @@ export function ParticipantDetail() {
                 <Link to={`/behaviours/${b.id}`} className="block p-4 hover:bg-slate-50 dark:hover:bg-slate-800">
                   <div className="font-medium text-[#111111] dark:text-white">{b.name}</div>
                   <div className="text-xs text-slate-500 line-clamp-1">{b.operationalDefinition}</div>
+                  {b.concernCategories.length > 0 && (
+                    <div className="text-xs text-slate-400 mt-0.5">{b.concernCategories.join(', ')}</div>
+                  )}
                 </Link>
               </li>
             ))}
