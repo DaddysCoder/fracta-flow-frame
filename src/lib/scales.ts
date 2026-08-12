@@ -3,7 +3,7 @@
 // psychometrically validated the way BPI-01, OBS, or FAST are. Labelled as
 // "practical" throughout the UI, never as "validated".
 
-import type { ConsequenceTag } from './types'
+import type { ConsequenceTag, EscalationPhase, EscalationPhaseData } from './types'
 
 export const FREQUENCY_SCALE = [
   { value: 0, label: 'Never observed' },
@@ -103,16 +103,77 @@ export const CONSEQUENCE_ITEMS: readonly { label: string; domain: ConsequenceTag
 ]
 
 // Rolls a multi-select consequence checklist up to the single ConsequenceTag
-// that hypothesis.ts needs. A "Other" addition (not in CONSEQUENCE_ITEMS)
-// can't resolve to a domain and is skipped for this purpose — it still shows
-// in the episode's free-text/checklist detail, just doesn't drive
-// triangulation. When ticked items span more than one domain, the first
-// match in CONSEQUENCE_ITEMS' listed order wins (attention, then escape,
-// tangible, automatic, none observed) — a deterministic "primary reported
-// consequence" convention, not an attempt to average conflicting signals.
-export function deriveConsequenceTag(consequenceTags: string[]): ConsequenceTag {
+// that hypothesis.ts needs. When ticked items span more than one domain, the
+// first match in CONSEQUENCE_ITEMS' listed order wins (attention, then
+// escape, tangible, automatic, none observed) — a deterministic "primary
+// reported consequence" convention, not an attempt to average conflicting
+// signals. customDomainMap (Phase 1.2 §3) resolves per-behaviour custom
+// consequence items added at logging time — every one of those is required
+// to carry an explicit domain at entry (see BehaviourChecklistItem), so a
+// custom item never silently bypasses this mapping.
+export function deriveConsequenceTag(
+  consequenceTags: string[],
+  customDomainMap: Record<string, ConsequenceTag> = {},
+): ConsequenceTag {
   for (const item of CONSEQUENCE_ITEMS) {
     if (consequenceTags.includes(item.label)) return item.domain
   }
+  for (const tag of consequenceTags) {
+    if (customDomainMap[tag]) return customDomainMap[tag]
+  }
   return 'none_observed'
+}
+
+// Phase 1.2 (brief §1) — six-phase behaviour escalation cycle, general PBS/
+// crisis-prevention convention (Colvin's Acting-Out Behaviour Cycle), not a
+// licensed instrument. Starting items per phase — review against real
+// caseload data before treating as authoritative, same caveat as every
+// other starter list in this build.
+export const ESCALATION_PHASE_ORDER: EscalationPhase[] = [
+  'baseline',
+  'early_warning',
+  'escalation',
+  'peak_crisis',
+  'de_escalation',
+  'recovery',
+]
+
+export const ESCALATION_PHASE_LABELS: Record<EscalationPhase, string> = {
+  baseline: 'Baseline',
+  early_warning: 'Early warning',
+  escalation: 'Escalation',
+  peak_crisis: 'Peak/crisis',
+  de_escalation: 'De-escalation',
+  recovery: 'Recovery',
+}
+
+export const ESCALATION_PHASE_ITEMS: Record<EscalationPhase, string[]> = {
+  baseline: ['Calm', 'Engaged', 'Typical communication', 'Settled posture'],
+  early_warning: [
+    'Pacing',
+    'Fidgeting',
+    'Withdrawing',
+    'Muttering',
+    'Tense posture',
+    'Avoiding eye contact',
+  ],
+  escalation: [
+    'Raised voice',
+    'Swearing',
+    'Breathing loudly/heavily',
+    'Clenched fists',
+    'Refusing instructions',
+    'Pushing items',
+  ],
+  peak_crisis: ['Kicking', 'Screaming', 'Hitting', 'Throwing items', 'Self-injury', 'Absconding'],
+  de_escalation: ['Breathing slowing', 'Voice lowering', 'Compliance returning', 'Seeking space'],
+  recovery: ['Quiet', 'Tired', 'Apologetic', 'Seeking reassurance', 'Wanting to sleep'],
+}
+
+export function emptyEscalationCycle(): Record<EscalationPhase, EscalationPhaseData> {
+  const cycle = {} as Record<EscalationPhase, EscalationPhaseData>
+  for (const phase of ESCALATION_PHASE_ORDER) {
+    cycle[phase] = { checkedItems: [], customItems: [] }
+  }
+  return cycle
 }

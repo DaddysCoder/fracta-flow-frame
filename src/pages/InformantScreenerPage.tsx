@@ -76,19 +76,22 @@ export function InformantScreenerPage() {
         <div className="max-w-sm w-full text-center space-y-4">
           <h1 className="text-lg font-display font-bold text-[#111111]">Thanks — you're done</h1>
           <p className="text-sm text-slate-600">
-            Show this code to the practitioner so they can scan it into their app.
+            Send this code back to the practitioner however's easiest — text, email, or let them
+            scan the QR below.
           </p>
-          {qrDataUrl ? (
-            <img src={qrDataUrl} alt="Completed screener response code" className="mx-auto rounded-lg border border-slate-200" />
-          ) : (
-            <p className="text-sm text-slate-500">Generating code…</p>
-          )}
-          <details className="text-left text-xs text-slate-500">
-            <summary className="cursor-pointer">Can't scan? Copy the code as text instead</summary>
-            <textarea readOnly value={payloadText} className="mt-2 w-full rounded border border-slate-300 p-2 font-mono text-[10px]" rows={3} />
-            <button onClick={handleCopy} className="mt-1 rounded bg-[#111111] text-white px-3 py-1 text-xs">
-              {copied ? 'Copied' : 'Copy text'}
+          <div className="space-y-2">
+            <textarea readOnly value={payloadText} className="w-full rounded border border-slate-300 p-2 font-mono text-[10px]" rows={3} />
+            <button onClick={handleCopy} className="w-full rounded-md bg-[#111111] text-white py-2 text-sm font-semibold">
+              {copied ? 'Copied' : 'Copy code'}
             </button>
+          </div>
+          <details className="text-left text-xs text-slate-500">
+            <summary className="cursor-pointer">Or show this QR code instead</summary>
+            {qrDataUrl ? (
+              <img src={qrDataUrl} alt="Completed screener response code" className="mx-auto mt-2 rounded-lg border border-slate-200" />
+            ) : (
+              <p className="mt-2 text-slate-500">Generating code…</p>
+            )}
           </details>
         </div>
       </div>

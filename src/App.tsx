@@ -7,16 +7,18 @@ import { ParticipantDetail } from './pages/ParticipantDetail'
 import { BehaviourDetail } from './pages/BehaviourDetail'
 import { Settings } from './pages/Settings'
 import { InformantScreenerPage } from './pages/InformantScreenerPage'
+import { InformantReportPage } from './pages/InformantReportPage'
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Informant-facing route (brief §4, Phase 4): deliberately outside
-            DisclaimerGate and Layout. It never touches IndexedDB or any
-            practitioner/participant data, and shows no navigation chrome
-            tying it to clinical records. */}
+        {/* Informant-facing routes (brief §4, Phase 4 + Phase 1.2): deliberately
+            outside DisclaimerGate and Layout. Neither touches IndexedDB or any
+            practitioner/participant data, and both show no navigation chrome
+            tying them to clinical records. */}
         <Route path="/screener" element={<InformantScreenerPage />} />
+        <Route path="/report" element={<InformantReportPage />} />
 
         <Route
           element={

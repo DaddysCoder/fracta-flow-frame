@@ -3,12 +3,32 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import QRCode from 'qrcode'
 import jsQR from 'jsqr'
 import { db } from '../lib/db'
-import { cancelScreenerInvite, createScreenerInvite, importScreenerResponse } from '../lib/actions'
+import {
+  cancelReportInvite,
+  cancelScreenerInvite,
+  createReportInvite,
+  createScreenerInvite,
+  importIncidentReport,
+  importScreenerResponse,
+} from '../lib/actions'
 import { decodeResponsePayload } from '../lib/qrPayload'
+import { decodeReportPayload } from '../lib/reportPayload'
+import type { ReportInvite, ScreenerInvite } from '../lib/types'
 
 const ROLE_OPTIONS = ['Support worker', 'Parent', 'Sibling', 'Teacher', 'Other']
 
-function GenerateInviteSection({ behaviourId }: { behaviourId: string }) {
+// Generic across screener and incident-report invites (brief §4/§5) — both
+// share this exact shape, so generation and the pending-invites list are
+// written once and parameterised rather than duplicated per invite type.
+function GenerateInviteSection({
+  title,
+  description,
+  onGenerate,
+}: {
+  title: string
+  description: string
+  onGenerate: (informantRole: string) => Promise<{ token: string; url: string }>
+}) {
   const [role, setRole] = useState(ROLE_OPTIONS[0])
   const [customRole, setCustomRole] = useState('')
   const [invite, setInvite] = useState<{ token: string; url: string } | null>(null)
@@ -33,8 +53,8 @@ function GenerateInviteSection({ behaviourId }: { behaviourId: string }) {
   }, [invite])
 
   async function handleGenerate() {
-    const created = await createScreenerInvite({ behaviourId, informantRole: effectiveRole })
-    setInvite({ token: created.token, url: created.url })
+    const created = await onGenerate(effectiveRole)
+    setInvite(created)
   }
 
   async function handleCopy() {
@@ -46,11 +66,8 @@ function GenerateInviteSection({ behaviourId }: { behaviourId: string }) {
 
   return (
     <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">
-      <h2 className="text-sm font-semibold text-[#111111] dark:text-white">Invite someone to complete the screener</h2>
-      <p className="text-xs text-slate-500">
-        No account or app install needed for them — they scan a QR, answer on their own phone,
-        and show you a second QR when done. No clinical detail travels through the link.
-      </p>
+      <h2 className="text-sm font-semibold text-[#111111] dark:text-white">{title}</h2>
+      <p className="text-xs text-slate-500">{description}</p>
       <div className="flex flex-wrap items-end gap-2">
         <label className="text-sm text-slate-700 dark:text-slate-200">
           Their role
@@ -97,12 +114,13 @@ function GenerateInviteSection({ behaviourId }: { behaviourId: string }) {
   )
 }
 
-function PendingInvitesList({ behaviourId }: { behaviourId: string }) {
-  const invites = useLiveQuery(
-    () => db.screenerInvites.where('behaviourId').equals(behaviourId).reverse().sortBy('createdAt'),
-    [behaviourId],
-  )
-
+function InviteListView({
+  invites,
+  onCancel,
+}: {
+  invites: (ScreenerInvite | ReportInvite)[] | undefined
+  onCancel: (inviteId: string) => void
+}) {
   if (!invites?.length) {
     return <p className="text-sm text-slate-500">No invites generated yet.</p>
   }
@@ -121,7 +139,7 @@ function PendingInvitesList({ behaviourId }: { behaviourId: string }) {
           </div>
           {inv.status === 'pending' && (
             <button
-              onClick={() => cancelScreenerInvite(inv.id)}
+              onClick={() => onCancel(inv.id)}
               className="shrink-0 rounded-md border border-slate-300 dark:border-slate-700 px-2 py-1 text-xs text-slate-700 dark:text-slate-200"
             >
               Cancel
@@ -133,36 +151,46 @@ function PendingInvitesList({ behaviourId }: { behaviourId: string }) {
   )
 }
 
-type ScanResult = { kind: 'ok'; behaviourId: string; sameBehaviour: boolean } | { kind: 'error'; message: string }
+function ScreenerPendingInvitesList({ behaviourId }: { behaviourId: string }) {
+  const invites = useLiveQuery(
+    () => db.screenerInvites.where('behaviourId').equals(behaviourId).reverse().sortBy('createdAt'),
+    [behaviourId],
+  )
+  return <InviteListView invites={invites} onCancel={cancelScreenerInvite} />
+}
 
-function ScanImportSection({ behaviourId }: { behaviourId: string }) {
+function ReportPendingInvitesList({ behaviourId }: { behaviourId: string }) {
+  const invites = useLiveQuery(
+    () => db.reportInvites.where('behaviourId').equals(behaviourId).reverse().sortBy('createdAt'),
+    [behaviourId],
+  )
+  return <InviteListView invites={invites} onCancel={cancelReportInvite} />
+}
+
+type ImportResult = { kind: 'ok'; message: string } | { kind: 'error'; message: string }
+
+// Generic scan-or-paste import UI, shared by the screener and incident-
+// report handoff (brief §5). Paste-code is the default, primary path —
+// texting/messaging a short code through whatever channel the informant
+// and practitioner already use is more realistic than lining up a camera
+// scan in person. Camera scanning is opt-in, behind a toggle, not removed.
+function ImportCodeSection({
+  title,
+  onDecodedText,
+}: {
+  title: string
+  onDecodedText: (text: string) => Promise<ImportResult>
+}) {
+  const [showCamera, setShowCamera] = useState(false)
   const [scanning, setScanning] = useState(false)
   const [pasteText, setPasteText] = useState('')
-  const [result, setResult] = useState<ScanResult | null>(null)
+  const [result, setResult] = useState<ImportResult | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const rafRef = useRef<number | null>(null)
 
   async function handleDecodedText(text: string) {
-    const decoded = decodeResponsePayload(text)
-    if (!decoded.ok) {
-      setResult({ kind: 'error', message: decoded.error })
-      return
-    }
-    const outcome = await importScreenerResponse({
-      token: decoded.token,
-      responses: decoded.responses,
-      completedAt: decoded.completedAt,
-    })
-    if (outcome.status === 'not_found') {
-      setResult({ kind: 'error', message: "This code's invite wasn't found. It may be from a different device, or mistyped." })
-    } else if (outcome.status === 'already_used') {
-      setResult({ kind: 'error', message: 'This response has already been imported. Scanning it again would create a duplicate, so it was rejected.' })
-    } else if (outcome.status === 'cancelled') {
-      setResult({ kind: 'error', message: 'This invite was cancelled, so the response cannot be imported.' })
-    } else {
-      setResult({ kind: 'ok', behaviourId: outcome.behaviourId, sameBehaviour: outcome.behaviourId === behaviourId })
-    }
+    setResult(await onDecodedText(text))
   }
 
   function stopCamera() {
@@ -214,63 +242,180 @@ function ScanImportSection({ behaviourId }: { behaviourId: string }) {
 
   return (
     <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">
-      <h2 className="text-sm font-semibold text-[#111111] dark:text-white">Scan a completed response</h2>
+      <h2 className="text-sm font-semibold text-[#111111] dark:text-white">{title}</h2>
 
-      {!scanning ? (
+      <div className="space-y-2">
+        <textarea
+          value={pasteText}
+          onChange={(e) => setPasteText(e.target.value)}
+          rows={3}
+          placeholder="Paste the code the informant sent you"
+          className="block w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-2 py-1.5 text-xs font-mono"
+        />
         <button
-          onClick={startCamera}
-          className="rounded-md bg-[#111111] dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-sm font-medium"
+          onClick={() => handleDecodedText(pasteText)}
+          disabled={!pasteText.trim()}
+          className="rounded-md bg-[#111111] dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-sm font-medium disabled:opacity-50"
         >
-          Start camera scan
+          Import
+        </button>
+      </div>
+
+      {!showCamera ? (
+        <button
+          onClick={() => setShowCamera(true)}
+          className="text-sm text-slate-600 dark:text-slate-300 underline"
+        >
+          Scan a QR code instead
         </button>
       ) : (
-        <div className="space-y-2">
-          <video ref={videoRef} className="w-full max-w-xs rounded-md" muted playsInline />
-          <button onClick={stopCamera} className="rounded-md border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-200">
-            Stop scanning
-          </button>
+        <div className="space-y-2 border-t border-slate-200 dark:border-slate-800 pt-3">
+          {!scanning ? (
+            <button
+              onClick={startCamera}
+              className="rounded-md border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-200"
+            >
+              Start camera scan
+            </button>
+          ) : (
+            <>
+              <video ref={videoRef} className="w-full max-w-xs rounded-md" muted playsInline />
+              <button onClick={stopCamera} className="rounded-md border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-200">
+                Stop scanning
+              </button>
+            </>
+          )}
         </div>
       )}
-
-      <details className="text-sm">
-        <summary className="cursor-pointer text-slate-600 dark:text-slate-300">Can't scan? Paste the code instead</summary>
-        <div className="mt-2 space-y-2">
-          <textarea
-            value={pasteText}
-            onChange={(e) => setPasteText(e.target.value)}
-            rows={3}
-            placeholder="Paste the text shown under the informant's QR code"
-            className="block w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-2 py-1.5 text-xs font-mono"
-          />
-          <button
-            onClick={() => handleDecodedText(pasteText)}
-            disabled={!pasteText.trim()}
-            className="rounded-md bg-[#111111] dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-sm font-medium disabled:opacity-50"
-          >
-            Import
-          </button>
-        </div>
-      </details>
 
       {result?.kind === 'error' && <p className="text-sm text-red-600">{result.message}</p>}
-      {result?.kind === 'ok' && (
-        <p className="text-sm text-green-600">
-          Imported successfully{result.sameBehaviour ? '.' : ' — against a different behaviour than this page (the invite\'s own token determined the destination).'}
-        </p>
-      )}
+      {result?.kind === 'ok' && <p className="text-sm text-green-600">{result.message}</p>}
     </div>
   )
 }
 
+async function handleScreenerImport(text: string, behaviourId: string): Promise<ImportResult> {
+  const decoded = decodeResponsePayload(text)
+  if (!decoded.ok) return { kind: 'error', message: decoded.error }
+
+  const outcome = await importScreenerResponse({
+    token: decoded.token,
+    responses: decoded.responses,
+    completedAt: decoded.completedAt,
+  })
+  if (outcome.status === 'not_found') {
+    return { kind: 'error', message: "This code's invite wasn't found. It may be from a different device, or mistyped." }
+  }
+  if (outcome.status === 'already_used') {
+    return { kind: 'error', message: 'This response has already been imported. Importing it again would create a duplicate, so it was rejected.' }
+  }
+  if (outcome.status === 'cancelled') {
+    return { kind: 'error', message: 'This invite was cancelled, so the response cannot be imported.' }
+  }
+  const sameBehaviour = outcome.behaviourId === behaviourId
+  return {
+    kind: 'ok',
+    message: sameBehaviour
+      ? 'Imported successfully.'
+      : "Imported successfully — against a different behaviour than this page (the invite's own token determined the destination).",
+  }
+}
+
+async function handleReportImport(text: string, behaviourId: string): Promise<ImportResult> {
+  const decoded = decodeReportPayload(text)
+  if (!decoded.ok) return { kind: 'error', message: decoded.error }
+
+  const r = decoded.report
+  const outcome = await importIncidentReport({
+    token: r.token,
+    dateTime: r.dateTime,
+    durationMinutes: r.durationMinutes,
+    severityRating: r.severityRating,
+    frequencyContext: r.frequencyContext,
+    settingEvent: r.settingEvent,
+    settingEventTags: r.settingEventTags,
+    antecedentText: r.antecedentText,
+    antecedentTags: r.antecedentTags,
+    consequenceText: r.consequenceText,
+    consequenceTags: r.consequenceTags,
+    riskFlags: r.riskFlags,
+  })
+  if (outcome.status === 'not_found') {
+    return { kind: 'error', message: "This code's invite wasn't found. It may be from a different device, or mistyped." }
+  }
+  if (outcome.status === 'already_used') {
+    return { kind: 'error', message: 'This report has already been imported. Importing it again would create a duplicate episode, so it was rejected.' }
+  }
+  if (outcome.status === 'cancelled') {
+    return { kind: 'error', message: 'This invite was cancelled, so the report cannot be imported.' }
+  }
+  const sameBehaviour = outcome.behaviourId === behaviourId
+  return {
+    kind: 'ok',
+    message: sameBehaviour
+      ? 'Imported successfully as a new episode.'
+      : "Imported successfully as a new episode — against a different behaviour than this page (the invite's own token determined the destination).",
+  }
+}
+
+type HandoffKind = 'screener' | 'report'
+
 export function HandoffPanel({ behaviourId }: { behaviourId: string }) {
+  const [kind, setKind] = useState<HandoffKind>('screener')
+
   return (
     <div className="space-y-4">
-      <GenerateInviteSection behaviourId={behaviourId} />
-      <div>
-        <h2 className="text-sm font-semibold text-[#111111] dark:text-white mb-2">Pending &amp; past invites</h2>
-        <PendingInvitesList behaviourId={behaviourId} />
+      <div className="flex gap-1 border-b border-slate-200 dark:border-slate-800">
+        {(['screener', 'report'] as HandoffKind[]).map((k) => (
+          <button
+            key={k}
+            onClick={() => setKind(k)}
+            className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
+              kind === k
+                ? 'border-[#111111] dark:border-white text-[#111111] dark:text-white'
+                : 'border-transparent text-slate-500'
+            }`}
+          >
+            {k === 'screener' ? 'Function screener' : 'Incident report'}
+          </button>
+        ))}
       </div>
-      <ScanImportSection behaviourId={behaviourId} />
+
+      {kind === 'screener' && (
+        <>
+          <GenerateInviteSection
+            title="Invite someone to complete the screener"
+            description="No account or app install needed for them — they scan a QR, answer on their own phone, and send you a code when done. No clinical detail travels through the link."
+            onGenerate={(informantRole) => createScreenerInvite({ behaviourId, informantRole })}
+          />
+          <div>
+            <h2 className="text-sm font-semibold text-[#111111] dark:text-white mb-2">Pending &amp; past invites</h2>
+            <ScreenerPendingInvitesList behaviourId={behaviourId} />
+          </div>
+          <ImportCodeSection
+            title="Import a completed screener"
+            onDecodedText={(text) => handleScreenerImport(text, behaviourId)}
+          />
+        </>
+      )}
+
+      {kind === 'report' && (
+        <>
+          <GenerateInviteSection
+            title="Invite someone to report an incident"
+            description="For a support worker or other witness to describe something that happened, from their own phone. No clinical detail travels through the link."
+            onGenerate={(informantRole) => createReportInvite({ behaviourId, informantRole })}
+          />
+          <div>
+            <h2 className="text-sm font-semibold text-[#111111] dark:text-white mb-2">Pending &amp; past invites</h2>
+            <ReportPendingInvitesList behaviourId={behaviourId} />
+          </div>
+          <ImportCodeSection
+            title="Import a completed incident report"
+            onDecodedText={(text) => handleReportImport(text, behaviourId)}
+          />
+        </>
+      )}
     </div>
   )
 }

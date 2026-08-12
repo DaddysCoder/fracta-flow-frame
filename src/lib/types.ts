@@ -171,4 +171,67 @@ export interface FormulationRecord {
   frequencyImpression: string
   riskScenarioHigh: string
   riskScenarioLow: string
+  escalationCycle: Record<EscalationPhase, EscalationPhaseData>
+}
+
+// Phase 1.2 — behaviour escalation cycle (brief §1). General PBS/crisis-
+// prevention convention (Colvin's Acting-Out Behaviour Cycle), not a
+// licensed instrument. Captured once during the Formulation interview, not
+// re-entered per incident.
+export type EscalationPhase =
+  | 'baseline'
+  | 'early_warning'
+  | 'escalation'
+  | 'peak_crisis'
+  | 'de_escalation'
+  | 'recovery'
+
+export interface EscalationPhaseData {
+  checkedItems: string[]
+  customItems: string[]
+}
+
+// Phase 1.2 — per-behaviour reusable ABC checklist (brief §3).
+//
+// Deviation from the brief worth flagging: §3 describes the dynamic ABC
+// checklist as sourced from "checkedItems + customItems across all of that
+// behaviour's FormulationRecords" for antecedent/setting-event fields — but
+// FormulationRecord as Phase 1.1 actually shipped it (above) has no
+// antecedent/setting-event checklist fields, only free text plus (as of
+// this phase) escalationCycle, which describes behaviour *presentation*
+// across escalation phases, not antecedents/setting events/consequences.
+// There is nothing in Formulation to union for those three ABC fields.
+// EpisodeForm.tsx also has no "presentation" field, so escalationCycle
+// doesn't feed episode logging either (brief §3 says skip that part when
+// no such field exists).
+//
+// This store is the "per-behaviour reusable-items store" the brief
+// explicitly allows as an alternative ("your call"). It starts seeded
+// implicitly by the generic starter lists in scales.ts (never persisted
+// until something is added), and every "Other" entered while logging a
+// real episode is written here so it's offered next time.
+export type EpisodeChecklistField = 'antecedent' | 'settingEvent' | 'consequence'
+
+export interface BehaviourChecklistItem {
+  id: string
+  behaviourId: string
+  field: EpisodeChecklistField
+  label: string
+  // Required (non-null) when field === 'consequence' — every consequence
+  // item, custom or not, must resolve to exactly one FAST domain (or
+  // 'none_observed') for Episode.consequenceTag (brief §3 hard constraint,
+  // carried over from Phase 1.1/Phase 2).
+  domain: ConsequenceTag | null
+  createdAt: string
+}
+
+// Phase 1.2 — QR handoff extended to incident/ABC reporting (brief §4).
+// Mirrors ScreenerInvite/ScreenerInviteStatus exactly.
+export interface ReportInvite {
+  id: string
+  behaviourId: string // local only — never transmitted through the QR/URL
+  token: string
+  informantRole: string
+  createdAt: string // ISO string, not Date — consistent with the rest of this data model
+  status: ScreenerInviteStatus
 }

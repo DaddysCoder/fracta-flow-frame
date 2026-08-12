@@ -1,6 +1,9 @@
 import { type FormEvent, useState } from 'react'
 import { createFormulation } from '../lib/actions'
 import { usePractitioner } from '../lib/practitioner'
+import { ChecklistField } from './ChecklistField'
+import { emptyEscalationCycle, ESCALATION_PHASE_ITEMS, ESCALATION_PHASE_LABELS, ESCALATION_PHASE_ORDER } from '../lib/scales'
+import type { EscalationPhase, EscalationPhaseData } from '../lib/types'
 
 // Structured interview / initial-assessment mode (brief §3). Guided prompts,
 // not mandatory structured fields — every prompt resolves to one free-text
@@ -15,7 +18,35 @@ export function FormulationForm({ behaviourId }: { behaviourId: string }) {
   const [frequencyImpression, setFrequencyImpression] = useState('')
   const [riskScenarioHigh, setRiskScenarioHigh] = useState('')
   const [riskScenarioLow, setRiskScenarioLow] = useState('')
+  const [escalationCycle, setEscalationCycle] = useState<Record<EscalationPhase, EscalationPhaseData>>(
+    emptyEscalationCycle(),
+  )
   const [saved, setSaved] = useState(false)
+
+  function togglePhaseItem(phase: EscalationPhase, item: string) {
+    setEscalationCycle((prev) => {
+      const phaseData = prev[phase]
+      const checkedItems = phaseData.checkedItems.includes(item)
+        ? phaseData.checkedItems.filter((i) => i !== item)
+        : [...phaseData.checkedItems, item]
+      return { ...prev, [phase]: { ...phaseData, checkedItems } }
+    })
+  }
+
+  function addPhaseCustomItem(phase: EscalationPhase, item: string) {
+    setEscalationCycle((prev) => {
+      const phaseData = prev[phase]
+      return {
+        ...prev,
+        [phase]: {
+          checkedItems: [...phaseData.checkedItems, item],
+          customItems: phaseData.customItems.includes(item)
+            ? phaseData.customItems
+            : [...phaseData.customItems, item],
+        },
+      }
+    })
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -30,6 +61,7 @@ export function FormulationForm({ behaviourId }: { behaviourId: string }) {
       frequencyImpression,
       riskScenarioHigh,
       riskScenarioLow,
+      escalationCycle,
     })
     setDescriptionRecentExample('')
     setDescriptionIntenseEpisode('')
@@ -38,6 +70,7 @@ export function FormulationForm({ behaviourId }: { behaviourId: string }) {
     setFrequencyImpression('')
     setRiskScenarioHigh('')
     setRiskScenarioLow('')
+    setEscalationCycle(emptyEscalationCycle())
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
@@ -129,6 +162,26 @@ export function FormulationForm({ behaviourId }: { behaviourId: string }) {
           className="mt-1 block w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm"
         />
       </label>
+
+      <div>
+        <h3 className="text-sm font-medium text-slate-700 dark:text-slate-200">Behaviour escalation cycle</h3>
+        <p className="text-xs text-slate-500 mt-0.5 mb-2">
+          What this behaviour typically looks like at each phase — captured once here, not
+          re-entered per incident.
+        </p>
+        <div className="space-y-3">
+          {ESCALATION_PHASE_ORDER.map((phase) => (
+            <ChecklistField
+              key={phase}
+              label={ESCALATION_PHASE_LABELS[phase]}
+              items={[...ESCALATION_PHASE_ITEMS[phase], ...escalationCycle[phase].customItems]}
+              selected={escalationCycle[phase].checkedItems}
+              onToggle={(item) => togglePhaseItem(phase, item)}
+              onAddCustom={(item) => addPhaseCustomItem(phase, item)}
+            />
+          ))}
+        </div>
+      </div>
 
       <div className="flex items-center gap-3">
         <button

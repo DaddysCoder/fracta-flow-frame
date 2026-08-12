@@ -1,11 +1,21 @@
+import type { EntityTable } from 'dexie'
 import { db, newId } from './db'
-import type { DocumentationFormat, RiskFlagItem, ScreenerResponse } from './types'
+import type {
+  ConsequenceTag,
+  DocumentationFormat,
+  EscalationPhase,
+  EscalationPhaseData,
+  RiskFlagItem,
+  ScreenerInviteStatus,
+  ScreenerResponse,
+} from './types'
 import { scoreDomains } from './screener'
 import { deriveConsequenceTag } from './scales'
 import { computeHypothesis, type ComputeOutcome } from './hypothesis'
 import { checkEpisodeTriggers, checkHypothesisTriggers, type FlagCandidate } from './riskFlags'
 import { renderDocumentationExport } from './documentExport'
 import { buildInviteUrl, generateToken } from './qrPayload'
+import { buildReportInviteUrl } from './reportPayload'
 
 export async function createParticipant(input: {
   identifyingDetails: string
@@ -60,6 +70,18 @@ export async function createEpisode(input: {
   riskFlags: RiskFlagItem[]
   loggedBy: string
 }) {
+  // Custom consequence items added at logging time carry an explicit domain
+  // (Phase 1.2 §3) — resolve those so deriveConsequenceTag can use them too,
+  // not just the static CONSEQUENCE_ITEMS list.
+  const customConsequenceItems = await db.behaviourChecklistItems
+    .where('behaviourId')
+    .equals(input.behaviourId)
+    .and((c) => c.field === 'consequence' && c.domain !== null)
+    .toArray()
+  const customDomainMap = Object.fromEntries(
+    customConsequenceItems.map((c) => [c.label, c.domain as NonNullable<typeof c.domain>]),
+  )
+
   const id = newId()
   await db.episodes.add({
     id,
@@ -77,7 +99,7 @@ export async function createEpisode(input: {
     // Derived/rollup — never taken directly from the caller. hypothesis.ts
     // depends on this staying exactly one FAST domain or 'none_observed'
     // (brief §4 hard constraint).
-    consequenceTag: deriveConsequenceTag(input.consequenceTags),
+    consequenceTag: deriveConsequenceTag(input.consequenceTags, customDomainMap),
     loggedBy: input.loggedBy,
     riskFlags: input.riskFlags,
     createdAt: new Date().toISOString(),
@@ -89,6 +111,41 @@ export async function createEpisode(input: {
     await raiseFlagIfNotOpen(input.behaviourId, candidate)
   }
 
+  return id
+}
+
+// Phase 1.2 §3 — persists an "Add your own" checklist entry so it's offered
+// as an ordinary option next time this behaviour's episodes are logged.
+// domain is required (and validated) for field === 'consequence'; every
+// consequence item must resolve to a FAST domain, custom or not.
+export async function addBehaviourChecklistItem(input: {
+  behaviourId: string
+  field: 'antecedent' | 'settingEvent' | 'consequence'
+  label: string
+  domain?: ConsequenceTag
+}) {
+  const label = input.label.trim()
+  if (!label) throw new Error('A label is required')
+  if (input.field === 'consequence' && !input.domain) {
+    throw new Error('A function domain is required for a custom consequence item')
+  }
+
+  const existing = await db.behaviourChecklistItems
+    .where('behaviourId')
+    .equals(input.behaviourId)
+    .and((c) => c.field === input.field && c.label === label)
+    .first()
+  if (existing) return existing.id
+
+  const id = newId()
+  await db.behaviourChecklistItems.add({
+    id,
+    behaviourId: input.behaviourId,
+    field: input.field,
+    label,
+    domain: input.field === 'consequence' ? (input.domain ?? null) : null,
+    createdAt: new Date().toISOString(),
+  })
   return id
 }
 
@@ -274,42 +331,65 @@ export type ImportOutcome =
   | { status: 'already_used' }
   | { status: 'cancelled' }
 
-// Matches on token against a locally-stored pending invite (brief §2, step
-// 3) — no server round trip. Wrapped in a transaction so two near-
-// simultaneous imports of the same response QR can't both see 'pending' and
-// both succeed (brief §6: scanning the same response QR twice must reject
-// the second, not silently create two FunctionScreener records).
+export type ClaimOutcome<T> =
+  | { status: 'ok'; invite: T }
+  | { status: 'not_found' }
+  | { status: 'already_used' }
+  | { status: 'cancelled' }
+
+// Shared transactional invite-claim pattern behind both importScreenerResponse
+// and importIncidentReport (brief §4: "reuse that logic, don't reimplement
+// it differently"). Matches on token against a locally-stored pending
+// invite — no server round trip — and flips it to 'completed' inside the
+// same transaction, so two near-simultaneous imports of the same response
+// QR can't both see 'pending' and both succeed (brief §6: scanning the same
+// response QR twice must reject the second, not silently create a
+// duplicate downstream record).
+async function claimInvite<T extends { id: string; token: string; behaviourId: string; status: ScreenerInviteStatus }>(
+  table: EntityTable<T, 'id'>,
+  token: string,
+): Promise<ClaimOutcome<T>> {
+  return db.transaction('rw', [table], async () => {
+    const invite = await table.where('token').equals(token).first()
+    if (!invite) return { status: 'not_found' as const }
+    if (invite.status === 'completed') return { status: 'already_used' as const }
+    if (invite.status === 'cancelled') return { status: 'cancelled' as const }
+    // Dexie's update() typing doesn't resolve cleanly through a generic T
+    // here (key type and UpdateSpec both depend on the concrete shape);
+    // every table this is called with genuinely has a string id and status
+    // field, so the loosened typing on this one call is safe at runtime.
+    const loose = table as unknown as EntityTable<{ id: string; status: ScreenerInviteStatus }, 'id'>
+    await loose.update(invite.id, { status: 'completed' })
+    return { status: 'ok' as const, invite }
+  })
+}
+
 export async function importScreenerResponse(input: {
   token: string
   responses: ScreenerResponse[]
   completedAt: string
   informantName?: string
 }): Promise<ImportOutcome> {
-  return db.transaction('rw', [db.screenerInvites, db.screeners], async () => {
-    const invite = await db.screenerInvites.where('token').equals(input.token).first()
-    if (!invite) return { status: 'not_found' as const }
-    if (invite.status === 'completed') return { status: 'already_used' as const }
-    if (invite.status === 'cancelled') return { status: 'cancelled' as const }
+  const claim = await claimInvite(db.screenerInvites, input.token)
+  if (claim.status !== 'ok') return claim
 
-    const informantRole = input.informantName?.trim()
-      ? `${invite.informantRole} (${input.informantName.trim()})`
-      : invite.informantRole
+  const informantRole = input.informantName?.trim()
+    ? `${claim.invite.informantRole} (${input.informantName.trim()})`
+    : claim.invite.informantRole
 
-    const screenerId = newId()
-    await db.screeners.add({
-      id: screenerId,
-      behaviourId: invite.behaviourId,
-      informantId: newId(),
-      informantRole,
-      dateCompleted: input.completedAt,
-      rawResponses: input.responses,
-      domainScores: scoreDomains(input.responses),
-      createdAt: new Date().toISOString(),
-    })
-    await db.screenerInvites.update(invite.id, { status: 'completed' })
-
-    return { status: 'ok' as const, screenerId, behaviourId: invite.behaviourId }
+  const screenerId = newId()
+  await db.screeners.add({
+    id: screenerId,
+    behaviourId: claim.invite.behaviourId,
+    informantId: newId(),
+    informantRole,
+    dateCompleted: input.completedAt,
+    rawResponses: input.responses,
+    domainScores: scoreDomains(input.responses),
+    createdAt: new Date().toISOString(),
   })
+
+  return { status: 'ok', screenerId, behaviourId: claim.invite.behaviourId }
 }
 
 // Phase 1.1 — structured interview / initial-assessment mode (brief §3).
@@ -326,6 +406,7 @@ export async function createFormulation(input: {
   frequencyImpression: string
   riskScenarioHigh: string
   riskScenarioLow: string
+  escalationCycle: Record<EscalationPhase, EscalationPhaseData>
 }) {
   const id = newId()
   await db.formulations.add({
@@ -340,6 +421,84 @@ export async function createFormulation(input: {
     frequencyImpression: input.frequencyImpression.trim(),
     riskScenarioHigh: input.riskScenarioHigh.trim(),
     riskScenarioLow: input.riskScenarioLow.trim(),
+    escalationCycle: input.escalationCycle,
   })
   return id
+}
+
+// Phase 1.2 §4 — QR handoff extended to incident/ABC reporting. Mirrors
+// createScreenerInvite/cancelScreenerInvite exactly.
+export async function createReportInvite(input: { behaviourId: string; informantRole: string }) {
+  const id = newId()
+  const token = generateToken()
+  await db.reportInvites.add({
+    id,
+    behaviourId: input.behaviourId,
+    token,
+    informantRole: input.informantRole,
+    createdAt: new Date().toISOString(),
+    status: 'pending',
+  })
+  return { id, token, url: buildReportInviteUrl(token, input.informantRole) }
+}
+
+export async function cancelReportInvite(inviteId: string) {
+  const invite = await db.reportInvites.get(inviteId)
+  if (!invite) throw new Error('Invite not found')
+  if (invite.status !== 'pending') throw new Error('Only pending invites can be cancelled')
+  await db.reportInvites.update(inviteId, { status: 'cancelled' })
+}
+
+export type ImportReportOutcome =
+  | { status: 'ok'; episodeId: string; behaviourId: string }
+  | { status: 'not_found' }
+  | { status: 'already_used' }
+  | { status: 'cancelled' }
+
+// Claims the invite first (via the same claimInvite used by
+// importScreenerResponse — brief §4: reuse the pattern, don't reimplement
+// it), then creates the episode through the ordinary createEpisode path so
+// it gets the exact same risk-flag trigger checks and consequence-domain
+// resolution as a manually-logged episode. Claiming happens before episode
+// creation specifically so a duplicate scan is rejected before ever calling
+// createEpisode, not just before the episode would be visible.
+export async function importIncidentReport(input: {
+  token: string
+  dateTime: string
+  durationMinutes: number | null
+  severityRating: 0 | 1 | 2 | 3
+  frequencyContext: 0 | 1 | 2 | 3 | 4
+  settingEvent: string
+  settingEventTags: string[]
+  antecedentText: string
+  antecedentTags: string[]
+  consequenceText: string
+  consequenceTags: string[]
+  riskFlags: RiskFlagItem[]
+  informantName?: string
+}): Promise<ImportReportOutcome> {
+  const claim = await claimInvite(db.reportInvites, input.token)
+  if (claim.status !== 'ok') return claim
+
+  const loggedBy = input.informantName?.trim()
+    ? `${claim.invite.informantRole} (${input.informantName.trim()})`
+    : claim.invite.informantRole
+
+  const episodeId = await createEpisode({
+    behaviourId: claim.invite.behaviourId,
+    dateTime: input.dateTime,
+    durationMinutes: input.durationMinutes,
+    severityRating: input.severityRating,
+    frequencyContext: input.frequencyContext,
+    settingEvent: input.settingEvent,
+    settingEventTags: input.settingEventTags,
+    antecedentText: input.antecedentText,
+    antecedentTags: input.antecedentTags,
+    consequenceText: input.consequenceText,
+    consequenceTags: input.consequenceTags,
+    riskFlags: input.riskFlags,
+    loggedBy,
+  })
+
+  return { status: 'ok', episodeId, behaviourId: claim.invite.behaviourId }
 }

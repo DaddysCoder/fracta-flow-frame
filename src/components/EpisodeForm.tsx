@@ -1,18 +1,10 @@
 import { type FormEvent, useState } from 'react'
-import { createEpisode } from '../lib/actions'
+import { addBehaviourChecklistItem, createEpisode } from '../lib/actions'
 import { usePractitioner } from '../lib/practitioner'
-import { useCustomChecklistItems } from '../lib/customChecklistItems'
+import { useBehaviourChecklistItems } from '../lib/checklists'
 import { ChecklistField } from './ChecklistField'
-import {
-  ANTECEDENT_ITEMS,
-  CONSEQUENCE_ITEMS,
-  deriveConsequenceTag,
-  FREQUENCY_SCALE,
-  RISK_FLAG_OPTIONS,
-  SETTING_EVENT_ITEMS,
-  SEVERITY_SCALE,
-} from '../lib/scales'
-import type { RiskFlagItem } from '../lib/types'
+import { deriveConsequenceTag, FREQUENCY_SCALE, RISK_FLAG_OPTIONS, SEVERITY_SCALE } from '../lib/scales'
+import type { ConsequenceTag, RiskFlagItem } from '../lib/types'
 
 function nowLocal(): string {
   const d = new Date()
@@ -34,19 +26,18 @@ export function EpisodeForm({ behaviourId }: { behaviourId: string }) {
 
   const [settingEvent, setSettingEvent] = useState('')
   const [settingEventTags, setSettingEventTags] = useState<string[]>([])
-  const [customSettingEvents, addCustomSettingEvent] = useCustomChecklistItems(
-    'fba-screener:custom-setting-events',
-  )
+  const settingEventItems = useBehaviourChecklistItems(behaviourId, 'settingEvent')
 
   const [antecedentText, setAntecedentText] = useState('')
   const [antecedentTags, setAntecedentTags] = useState<string[]>([])
-  const [customAntecedents, addCustomAntecedent] = useCustomChecklistItems('fba-screener:custom-antecedents')
+  const antecedentItems = useBehaviourChecklistItems(behaviourId, 'antecedent')
 
   const [consequenceText, setConsequenceText] = useState('')
   const [consequenceTags, setConsequenceTags] = useState<string[]>([])
-  const [customConsequences, addCustomConsequence] = useCustomChecklistItems(
-    'fba-screener:custom-consequences',
-  )
+  const consequenceItems = useBehaviourChecklistItems(behaviourId, 'consequence')
+  // Tracks domains for items just added via "Other" this session, so the
+  // rollup preview below is accurate before the live query above catches up.
+  const [sessionConsequenceDomains, setSessionConsequenceDomains] = useState<Record<string, ConsequenceTag>>({})
 
   const [riskFlags, setRiskFlags] = useState<RiskFlagItem[]>([])
   const [saved, setSaved] = useState(false)
@@ -55,10 +46,7 @@ export function EpisodeForm({ behaviourId }: { behaviourId: string }) {
     setRiskFlags((prev) => (prev.includes(flag) ? prev.filter((f) => f !== flag) : [...prev, flag]))
   }
 
-  const settingEventItems = [...SETTING_EVENT_ITEMS, ...customSettingEvents]
-  const antecedentItems = [...ANTECEDENT_ITEMS, ...customAntecedents]
-  const consequenceItems = [...CONSEQUENCE_ITEMS.map((c) => c.label), ...customConsequences]
-  const derivedConsequenceTag = deriveConsequenceTag(consequenceTags)
+  const derivedConsequenceTag = deriveConsequenceTag(consequenceTags, sessionConsequenceDomains)
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -88,6 +76,7 @@ export function EpisodeForm({ behaviourId }: { behaviourId: string }) {
     setAntecedentTags([])
     setConsequenceText('')
     setConsequenceTags([])
+    setSessionConsequenceDomains({})
     setRiskFlags([])
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
@@ -138,7 +127,7 @@ export function EpisodeForm({ behaviourId }: { behaviourId: string }) {
         selected={settingEventTags}
         onToggle={(item) => setSettingEventTags((prev) => toggleInList(prev, item))}
         onAddCustom={(item) => {
-          addCustomSettingEvent(item)
+          void addBehaviourChecklistItem({ behaviourId, field: 'settingEvent', label: item })
           setSettingEventTags((prev) => [...prev, item])
         }}
       />
@@ -162,7 +151,7 @@ export function EpisodeForm({ behaviourId }: { behaviourId: string }) {
             selected={antecedentTags}
             onToggle={(item) => setAntecedentTags((prev) => toggleInList(prev, item))}
             onAddCustom={(item) => {
-              addCustomAntecedent(item)
+              void addBehaviourChecklistItem({ behaviourId, field: 'antecedent', label: item })
               setAntecedentTags((prev) => [...prev, item])
             }}
           />
@@ -183,9 +172,11 @@ export function EpisodeForm({ behaviourId }: { behaviourId: string }) {
             label="Consequences"
             items={consequenceItems}
             selected={consequenceTags}
+            domainRequired
             onToggle={(item) => setConsequenceTags((prev) => toggleInList(prev, item))}
-            onAddCustom={(item) => {
-              addCustomConsequence(item)
+            onAddCustom={(item, domain) => {
+              void addBehaviourChecklistItem({ behaviourId, field: 'consequence', label: item, domain })
+              if (domain) setSessionConsequenceDomains((prev) => ({ ...prev, [item]: domain }))
               setConsequenceTags((prev) => [...prev, item])
             }}
           />

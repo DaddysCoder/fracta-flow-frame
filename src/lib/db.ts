@@ -1,6 +1,7 @@
 import Dexie, { type EntityTable } from 'dexie'
 import type {
   Behaviour,
+  BehaviourChecklistItem,
   DocumentationExport,
   Episode,
   FormulationRecord,
@@ -8,9 +9,11 @@ import type {
   FunctionScreener,
   Participant,
   Practitioner,
+  ReportInvite,
   RiskFlag,
   ScreenerInvite,
 } from './types'
+import { emptyEscalationCycle } from './scales'
 
 class FbaDatabase extends Dexie {
   practitioners!: EntityTable<Practitioner, 'id'>
@@ -23,6 +26,8 @@ class FbaDatabase extends Dexie {
   documentationExports!: EntityTable<DocumentationExport, 'id'>
   screenerInvites!: EntityTable<ScreenerInvite, 'id'>
   formulations!: EntityTable<FormulationRecord, 'id'>
+  behaviourChecklistItems!: EntityTable<BehaviourChecklistItem, 'id'>
+  reportInvites!: EntityTable<ReportInvite, 'id'>
 
   constructor() {
     super('fba-screener')
@@ -73,6 +78,27 @@ class FbaDatabase extends Dexie {
           e.consequenceTags ??= []
         }),
     )
+
+    // Phase 1.2 (brief §1): escalation cycle on FormulationRecord, backfilled
+    // with all six phases empty for existing rows.
+    this.version(8).upgrade((tx) =>
+      tx
+        .table('formulations')
+        .toCollection()
+        .modify((f) => {
+          f.escalationCycle ??= emptyEscalationCycle()
+        }),
+    )
+
+    // Phase 1.2 (brief §3): per-behaviour reusable ABC checklist store.
+    this.version(9).stores({
+      behaviourChecklistItems: 'id, behaviourId, field',
+    })
+
+    // Phase 1.2 (brief §4): QR handoff extended to incident/ABC reporting.
+    this.version(10).stores({
+      reportInvites: 'id, behaviourId, token, status, createdAt',
+    })
   }
 }
 

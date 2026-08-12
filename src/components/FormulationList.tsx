@@ -1,8 +1,17 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../lib/db'
-import type { FormulationRecord } from '../lib/types'
+import { ESCALATION_PHASE_LABELS, ESCALATION_PHASE_ORDER } from '../lib/scales'
 
-const FIELD_LABELS: { key: keyof FormulationRecord; label: string }[] = [
+type FreeTextField =
+  | 'descriptionRecentExample'
+  | 'descriptionIntenseEpisode'
+  | 'descriptionAntecedentAndResponse'
+  | 'onset'
+  | 'frequencyImpression'
+  | 'riskScenarioHigh'
+  | 'riskScenarioLow'
+
+const FIELD_LABELS: { key: FreeTextField; label: string }[] = [
   { key: 'descriptionRecentExample', label: 'Recent example' },
   { key: 'descriptionIntenseEpisode', label: 'Especially intense episode' },
   { key: 'descriptionAntecedentAndResponse', label: 'What happened before, and the response' },
@@ -47,6 +56,23 @@ export function FormulationList({ behaviourId }: { behaviourId: string }) {
                 </p>
               ) : null
             })}
+            {ESCALATION_PHASE_ORDER.some(
+              (phase) => r.escalationCycle[phase].checkedItems.length > 0,
+            ) && (
+              <div className="pt-1">
+                <span className="font-medium text-slate-700 dark:text-slate-300">Escalation cycle:</span>
+                <ul className="mt-1 space-y-0.5">
+                  {ESCALATION_PHASE_ORDER.filter(
+                    (phase) => r.escalationCycle[phase].checkedItems.length > 0,
+                  ).map((phase) => (
+                    <li key={phase} className="text-slate-600 dark:text-slate-400">
+                      <span className="text-slate-500">{ESCALATION_PHASE_LABELS[phase]}:</span>{' '}
+                      {r.escalationCycle[phase].checkedItems.join(', ')}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </li>
         ))}
       </ul>
