@@ -10,6 +10,7 @@ import { scoreDomains } from './screener'
 import { computeHypothesis, type ComputeOutcome } from './hypothesis'
 import { checkEpisodeTriggers, checkHypothesisTriggers, type FlagCandidate } from './riskFlags'
 import { renderDocumentationExport } from './documentExport'
+import { buildInviteUrl, generateToken } from './qrPayload'
 
 export async function createParticipant(input: {
   identifyingDetails: string
@@ -239,4 +240,71 @@ export async function generateDocumentationExport(input: {
     contentSnapshot,
   })
   return id
+}
+
+// Phase 4 — multi-informant handoff, QR only (brief §2-3).
+
+export async function createScreenerInvite(input: { behaviourId: string; informantRole: string }) {
+  const id = newId()
+  const token = generateToken()
+  await db.screenerInvites.add({
+    id,
+    behaviourId: input.behaviourId,
+    token,
+    informantRole: input.informantRole,
+    createdAt: new Date().toISOString(),
+    status: 'pending',
+  })
+  return { id, token, url: buildInviteUrl(token, input.informantRole) }
+}
+
+export async function cancelScreenerInvite(inviteId: string) {
+  const invite = await db.screenerInvites.get(inviteId)
+  if (!invite) throw new Error('Invite not found')
+  if (invite.status !== 'pending') throw new Error('Only pending invites can be cancelled')
+  await db.screenerInvites.update(inviteId, { status: 'cancelled' })
+}
+
+export type ImportOutcome =
+  | { status: 'ok'; screenerId: string; behaviourId: string }
+  | { status: 'not_found' }
+  | { status: 'already_used' }
+  | { status: 'cancelled' }
+
+// Matches on token against a locally-stored pending invite (brief §2, step
+// 3) — no server round trip. Wrapped in a transaction so two near-
+// simultaneous imports of the same response QR can't both see 'pending' and
+// both succeed (brief §6: scanning the same response QR twice must reject
+// the second, not silently create two FunctionScreener records).
+export async function importScreenerResponse(input: {
+  token: string
+  responses: ScreenerResponse[]
+  completedAt: string
+  informantName?: string
+}): Promise<ImportOutcome> {
+  return db.transaction('rw', [db.screenerInvites, db.screeners], async () => {
+    const invite = await db.screenerInvites.where('token').equals(input.token).first()
+    if (!invite) return { status: 'not_found' as const }
+    if (invite.status === 'completed') return { status: 'already_used' as const }
+    if (invite.status === 'cancelled') return { status: 'cancelled' as const }
+
+    const informantRole = input.informantName?.trim()
+      ? `${invite.informantRole} (${input.informantName.trim()})`
+      : invite.informantRole
+
+    const screenerId = newId()
+    await db.screeners.add({
+      id: screenerId,
+      behaviourId: invite.behaviourId,
+      informantId: newId(),
+      informantRole,
+      dateCompleted: input.completedAt,
+      rawResponses: input.responses,
+      domainScores: scoreDomains(input.responses),
+      createdAt: new Date().toISOString(),
+    })
+    await db.screenerInvites.update(invite.id, { status: 'completed' })
+
+    return { status: 'ok' as const, screenerId, behaviourId: invite.behaviourId }
+  })
 }

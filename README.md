@@ -1,10 +1,25 @@
-# FBA Screener
+# Primitive AI — FBA Screener
 
 A behaviour support practitioner tool combining structured behaviour/episode
 (ABC) logging with a FAST-structured function-of-behaviour screener — local-first,
 decision support only. **Phase 1 (MVP) + Phase 2 (triangulation) + Phase 3
-(escalation & documentation)** of the phased build described in the coding
-brief.
+(escalation & documentation) + Phase 4 (multi-informant QR handoff)** of the
+phased build described in the coding brief, under the Primitive AI brand.
+
+### Brand identity
+
+The header/disclaimer wordmark ("Primitiv*e*<sup>AI</sup>") and the
+ink/deep-magenta/paper palette follow the supplied brand guidelines
+(`--ink:#333333`, `--mag:#9D1D5B`, `--lift:#D8579A` on dark, `--paper:#F5F4F2`).
+Per the guidelines' own rule, magenta appears on exactly the wordmark's "e"
+and nowhere else — no magenta headings, rules, or buttons. **No actual SVG
+logo asset was supplied** with the guidelines, only filenames — the
+guidelines explicitly say "don't rebuild the wordmark by typing it, use the
+SVG," which isn't possible without one. `src/components/Wordmark.tsx` is a
+documented, literal fallback: swap in the real SVGs if they become
+available. The informant-facing `/screener` page deliberately carries no
+wordmark — the brief requires it to show no chrome tying it to clinical
+records at all.
 
 ## What this is (and isn't)
 
@@ -127,10 +142,40 @@ dashboard flags banner, and a "Documentation" tab per participant
 - Multi-behaviour export supported (`behaviourIds: string[]`); exports open
   as print-friendly HTML in a new tab for the browser's native print-to-PDF
 
-## Not yet built (later phase, see brief)
-
-- Phase 4: multi-informant screener handoff (QR first, email relay only if
-  demand is validated) and BYO-storage sync for ongoing episode logging
+**Phase 4 (multi-informant handoff, QR only)** — new "Multi-informant" tab
+per behaviour, and a standalone `/screener` route
+- Two lightweight QR codes, no backend, no accounts: the practitioner
+  generates an invite QR encoding only a random `token` and `role` (never a
+  behaviour name or any clinical detail); the informant completes the same
+  FAST screener in their own mobile browser at `/screener` — a route that
+  never touches IndexedDB and shows no navigation chrome — and gets back an
+  on-screen response QR generated entirely client-side
+- The practitioner scans the response QR (camera via `jsqr`, with a
+  manual-paste fallback for when scanning isn't convenient) and the token
+  round-trips the response to the correct `ScreenerInvite` automatically —
+  no manual behaviour re-selection
+- Payload-size discipline (brief §5) is solved structurally rather than by
+  dropping detail: the response QR encodes only the token, a completion
+  timestamp, and a 24-character answer-code string in `SCREENER_ITEMS`'
+  fixed canonical order — domain and item id are reconstructed on decode
+  from that same order, so the full response detail travels in ~80 bytes
+  without ever needing FAST's `rawResponses`-vs-`domainScores` trade-off.
+  `src/lib/qrPayload.test.ts` asserts this stays well under a safe QR
+  capacity ceiling.
+- Explicit error states, not silent failures: token not found, invite
+  already used, and invite cancelled are three distinct messages. A second
+  scan of an already-imported response is rejected (transactional check on
+  the invite's status), so it can't silently create a duplicate
+  `FunctionScreener`. Two pending invites for the same behaviour track and
+  import independently.
+- `src/lib/qrPayload.ts` and the invite/import actions are covered by a
+  vitest suite exercising every test case in the brief (full round trip,
+  unmatched token, duplicate scan, two concurrent invites, payload size).
+  A full Playwright pass additionally verified the round trip across two
+  separate browser contexts end to end.
+- Explicitly deferred (brief §7): the async email relay (build only if
+  QR-only usage shows real demand for it), any informant account/identity
+  system, and BYO-storage sync for ongoing multi-person episode logging.
 
 ## Development
 
@@ -139,8 +184,9 @@ npm install
 npm run dev      # http://localhost:5173
 npm run build    # typecheck + production build to dist/
 npm run preview  # serve the production build locally
-npm test         # vitest unit tests (triangulation + risk flag logic)
+npm test         # vitest unit tests (triangulation, risk flags, QR payload/handoff)
 ```
 
 Stack: Vite + React + TypeScript, Tailwind CSS, Dexie (IndexedDB),
-react-router-dom, recharts, vite-plugin-pwa, vitest.
+react-router-dom, recharts, vite-plugin-pwa, qrcode, jsqr, vitest
+(jsdom + fake-indexeddb for DB-backed tests).

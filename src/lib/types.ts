@@ -132,3 +132,16 @@ export interface DocumentationExport {
   format: DocumentationFormat
   contentSnapshot: string // fully rendered HTML at generation time — immutable once created
 }
+
+// Phase 4 — multi-informant handoff, QR only (brief §3).
+
+export type ScreenerInviteStatus = 'pending' | 'completed' | 'cancelled'
+
+export interface ScreenerInvite {
+  id: string
+  behaviourId: string // local only — never transmitted through the QR/URL
+  token: string // short random string, embedded in both QR codes
+  informantRole: string // e.g. "support worker", "parent", "sibling"
+  createdAt: string // ISO string, not Date — consistent with the rest of this data model
+  status: ScreenerInviteStatus
+}

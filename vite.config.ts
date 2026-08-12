@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -12,12 +13,12 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'FBA Screener',
+        name: 'Primitive AI — FBA Screener',
         short_name: 'FBA Screener',
         description:
           'Behaviour support intake, descriptive data, and function screener — local-first, decision support only.',
-        theme_color: '#0f172a',
-        background_color: '#f8fafc',
+        theme_color: '#333333',
+        background_color: '#F5F4F2',
         display: 'standalone',
         start_url: '/',
         icons: [
@@ -32,5 +33,9 @@ export default defineConfig({
       },
     }),
   ],
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./src/lib/testSetup.ts'],
+  },
 })
 

@@ -8,6 +8,7 @@ import type {
   Participant,
   Practitioner,
   RiskFlag,
+  ScreenerInvite,
 } from './types'
 
 class FbaDatabase extends Dexie {
@@ -19,6 +20,7 @@ class FbaDatabase extends Dexie {
   hypotheses!: EntityTable<FunctionHypothesis, 'id'>
   riskFlags!: EntityTable<RiskFlag, 'id'>
   documentationExports!: EntityTable<DocumentationExport, 'id'>
+  screenerInvites!: EntityTable<ScreenerInvite, 'id'>
 
   constructor() {
     super('fba-screener')
@@ -35,6 +37,9 @@ class FbaDatabase extends Dexie {
     this.version(3).stores({
       riskFlags: 'id, behaviourId, status, triggerType, triggeredAt',
       documentationExports: 'id, participantId, generatedAt',
+    })
+    this.version(4).stores({
+      screenerInvites: 'id, behaviourId, token, status, createdAt',
     })
   }
 }

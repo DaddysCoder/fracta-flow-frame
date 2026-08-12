@@ -40,7 +40,7 @@ export function DashboardFlagsBanner() {
               className="rounded-md bg-white dark:bg-slate-900 border border-red-200 dark:border-red-900 p-3 text-sm flex items-start justify-between gap-3"
             >
               <div>
-                <div className="font-medium text-slate-900 dark:text-white">
+                <div className="font-medium text-[#333333] dark:text-white">
                   {TRIGGER_LABEL[f.triggerType] ?? f.triggerType}
                   {behaviour && (
                     <>
@@ -56,7 +56,7 @@ export function DashboardFlagsBanner() {
               <button
                 onClick={() => practitioner && acknowledgeFlag(f.id, practitioner.name)}
                 disabled={!practitioner}
-                className="shrink-0 rounded-md bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-xs font-medium disabled:opacity-50"
+                className="shrink-0 rounded-md bg-[#333333] dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-xs font-medium disabled:opacity-50"
               >
                 Acknowledge
               </button>

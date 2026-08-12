@@ -8,14 +8,16 @@ import { ScreenerForm } from '../components/ScreenerForm'
 import { ScreenerList } from '../components/ScreenerList'
 import { HypothesisPanel } from '../components/HypothesisPanel'
 import { FlagsPanel } from '../components/FlagsPanel'
+import { HandoffPanel } from '../components/HandoffPanel'
 
-type Tab = 'episodes' | 'screener' | 'triangulation' | 'flags'
+type Tab = 'episodes' | 'screener' | 'triangulation' | 'flags' | 'handoff'
 
 const TAB_LABEL: Record<Tab, string> = {
   episodes: 'Episode log',
   screener: 'Function screener',
   triangulation: 'Triangulation',
   flags: 'Flags',
+  handoff: 'Multi-informant',
 }
 
 export function BehaviourDetail() {
@@ -37,18 +39,18 @@ export function BehaviourDetail() {
             ← {participant.identifyingDetails}
           </Link>
         )}
-        <h1 className="text-xl font-semibold text-slate-900 dark:text-white mt-1">{behaviour.name}</h1>
+        <h1 className="text-xl font-semibold text-[#333333] dark:text-white mt-1">{behaviour.name}</h1>
         <p className="text-sm text-slate-500 mt-1">{behaviour.operationalDefinition}</p>
       </div>
 
       <div className="flex gap-1 border-b border-slate-200 dark:border-slate-800">
-        {(['episodes', 'screener', 'triangulation', 'flags'] as Tab[]).map((t) => (
+        {(['episodes', 'screener', 'triangulation', 'flags', 'handoff'] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
               tab === t
-                ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white'
+                ? 'border-[#333333] dark:border-white text-[#333333] dark:text-white'
                 : 'border-transparent text-slate-500'
             }`}
           >
@@ -74,6 +76,8 @@ export function BehaviourDetail() {
       {tab === 'triangulation' && <HypothesisPanel behaviourId={behaviourId} />}
 
       {tab === 'flags' && <FlagsPanel behaviourId={behaviourId} />}
+
+      {tab === 'handoff' && <HandoffPanel behaviourId={behaviourId} />}
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import { type FormEvent, useState } from 'react'
 import { usePractitioner, acknowledgeDisclaimer, saveProfile } from '../lib/practitioner'
+import { Wordmark } from './Wordmark'
 
 // Unmissable first-use disclaimer (brief §7.1). Because practitioner scope
 // gating is open signup with no registration verification, this disclaimer
@@ -24,12 +25,13 @@ export function DisclaimerGate({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#333333]/70 p-4">
       <form
         onSubmit={handleSubmit}
         className="max-w-lg w-full rounded-lg bg-white dark:bg-slate-900 p-6 shadow-xl space-y-4"
       >
-        <h1 className="text-lg font-semibold text-slate-900 dark:text-white">
+        <Wordmark className="text-sm text-slate-400" />
+        <h1 className="text-lg font-semibold text-[#333333] dark:text-white">
           Before you start
         </h1>
         <div className="rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950 dark:border-amber-700 p-3 text-sm text-amber-900 dark:text-amber-100 space-y-2">
@@ -73,7 +75,7 @@ export function DisclaimerGate({ children }: { children: React.ReactNode }) {
         </div>
         <button
           type="submit"
-          className="w-full rounded-md bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-2 text-sm font-semibold"
+          className="w-full rounded-md bg-[#333333] dark:bg-white text-white dark:text-slate-900 py-2 text-sm font-semibold"
         >
           I understand — continue
         </button>

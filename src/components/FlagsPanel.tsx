@@ -40,7 +40,7 @@ function FlagRow({ flag }: { flag: RiskFlag }) {
     <li className="rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 text-sm space-y-2">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="font-medium text-slate-900 dark:text-white">
+          <div className="font-medium text-[#333333] dark:text-white">
             {TRIGGER_LABEL[flag.triggerType] ?? flag.triggerType}
           </div>
           <div className="text-slate-500">{flag.triggerDetail}</div>
@@ -65,7 +65,7 @@ function FlagRow({ flag }: { flag: RiskFlag }) {
         <button
           onClick={() => practitioner && acknowledgeFlag(flag.id, practitioner.name)}
           disabled={!practitioner}
-          className="rounded-md bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-xs font-medium disabled:opacity-50"
+          className="rounded-md bg-[#333333] dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-xs font-medium disabled:opacity-50"
         >
           Acknowledge
         </button>
@@ -98,7 +98,7 @@ function FlagRow({ flag }: { flag: RiskFlag }) {
               />
               <button
                 onClick={handleResolve}
-                className="rounded-md bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-xs font-medium"
+                className="rounded-md bg-[#333333] dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-xs font-medium"
               >
                 Confirm resolve
               </button>
