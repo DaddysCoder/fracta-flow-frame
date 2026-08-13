@@ -174,6 +174,12 @@ export interface ScreenerInvite {
 export interface FormulationRecord {
   id: string
   behaviourId: string
+  // Phase 1.4 (brief §2) — who this interview was conducted with, distinct
+  // from conductedBy (the practitioner). Optional: a formulation is often
+  // built from the practitioner's own records/observation rather than a
+  // named interview, so this isn't forced on every record.
+  informantName: string | null
+  informantRole: string | null
   conductedBy: string
   conductedAt: string // ISO string, not Date — consistent with the rest of this data model
   descriptionRecentExample: string

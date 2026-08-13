@@ -12,6 +12,8 @@ import type { EscalationPhase, EscalationPhaseData } from '../lib/types'
 // behaviour rather than a single fixed section.
 export function FormulationForm({ behaviourId }: { behaviourId: string }) {
   const practitioner = usePractitioner()
+  const [informantName, setInformantName] = useState('')
+  const [informantRole, setInformantRole] = useState('')
   const [descriptionRecentExample, setDescriptionRecentExample] = useState('')
   const [descriptionIntenseEpisode, setDescriptionIntenseEpisode] = useState('')
   const [descriptionAntecedentAndResponse, setDescriptionAntecedentAndResponse] = useState('')
@@ -54,6 +56,8 @@ export function FormulationForm({ behaviourId }: { behaviourId: string }) {
     if (!practitioner) return
     await createFormulation({
       behaviourId,
+      informantName,
+      informantRole,
       conductedBy: practitioner.name,
       descriptionRecentExample,
       descriptionIntenseEpisode,
@@ -64,6 +68,8 @@ export function FormulationForm({ behaviourId }: { behaviourId: string }) {
       riskScenarioLow,
       escalationCycle,
     })
+    setInformantName('')
+    setInformantRole('')
     setDescriptionRecentExample('')
     setDescriptionIntenseEpisode('')
     setDescriptionAntecedentAndResponse('')
@@ -90,6 +96,27 @@ export function FormulationForm({ behaviourId }: { behaviourId: string }) {
           Used once, early, at initial assessment — separate from ongoing episode logging. Every
           prompt is scaffolding for the conversation; nothing here is required.
         </p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+          Who is this interview with? (optional)
+          <input
+            value={informantName}
+            onChange={(e) => setInformantName(e.target.value)}
+            placeholder="Name — kept locally on this device only"
+            className="mt-1 block w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm"
+          />
+        </label>
+        <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+          Their role (optional)
+          <input
+            value={informantRole}
+            onChange={(e) => setInformantRole(e.target.value)}
+            placeholder="e.g. support worker, family member"
+            className="mt-1 block w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm"
+          />
+        </label>
       </div>
 
       <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">

@@ -48,6 +48,12 @@ export function FormulationList({ behaviourId }: { behaviourId: string }) {
               </span>
               <span className="text-xs text-slate-500">Conducted by {r.conductedBy}</span>
             </div>
+            {(r.informantName || r.informantRole) && (
+              <p className="text-xs text-slate-500">
+                Interview with {r.informantName || 'unnamed informant'}
+                {r.informantRole ? ` (${r.informantRole})` : ''}
+              </p>
+            )}
             {FIELD_LABELS.map(({ key, label }) => {
               const value = r[key]
               return value ? (

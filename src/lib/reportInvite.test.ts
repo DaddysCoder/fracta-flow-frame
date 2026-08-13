@@ -35,7 +35,7 @@ function sampleReport(overrides: Partial<Parameters<typeof importIncidentReport>
     antecedentText: 'Asked to line up',
     antecedentTags: [],
     consequenceText: 'Given attention',
-    consequenceTags: ['Attention (adult) given or avoided'],
+    consequenceTags: ['Attention (staff/support worker) given or avoided'],
     riskFlags: [],
     ...overrides,
   }

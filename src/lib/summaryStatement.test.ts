@@ -79,13 +79,13 @@ describe('buildSummaryStatement', () => {
       makeEpisode({
         antecedentTags: ['Given an instruction or demand'],
         settingEventTags: ['Lack of sleep'],
-        consequenceTags: ['Attention (adult) given or avoided'],
+        consequenceTags: ['Attention (staff/support worker) given or avoided'],
         consequenceTag: 'attention',
       }),
       makeEpisode({
         antecedentTags: ['Given an instruction or demand'],
         settingEventTags: ['Lack of sleep'],
-        consequenceTags: ['Attention (adult) given or avoided'],
+        consequenceTags: ['Attention (staff/support worker) given or avoided'],
         consequenceTag: 'attention',
       }),
     ]

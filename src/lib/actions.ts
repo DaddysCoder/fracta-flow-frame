@@ -412,6 +412,8 @@ export async function importScreenerResponse(input: {
 // impression, not a substitute for real logged Episode data).
 export async function createFormulation(input: {
   behaviourId: string
+  informantName?: string
+  informantRole?: string
   conductedBy: string
   descriptionRecentExample: string
   descriptionIntenseEpisode: string
@@ -426,6 +428,8 @@ export async function createFormulation(input: {
   await db.formulations.add({
     id,
     behaviourId: input.behaviourId,
+    informantName: input.informantName?.trim() || null,
+    informantRole: input.informantRole?.trim() || null,
     conductedBy: input.conductedBy,
     conductedAt: new Date().toISOString(),
     descriptionRecentExample: input.descriptionRecentExample.trim(),

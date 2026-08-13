@@ -109,15 +109,14 @@ export const BEHAVIOUR_CONCERN_GROUPS: ConcernCategoryGroup[] = [
     items: [
       'Says no to requests',
       'Refuses to follow instructions',
-      'Does the opposite of what is asked',
+      'Acts contrary to the direction given',
       "Doesn't respond to direction",
     ],
   },
   {
-    heading: 'Repetitive / unusual',
+    heading: 'Repetitive / patterned behaviours',
     items: [
       'Counts or checks things repeatedly',
-      'Talks to self',
       'Repeatedly brings up the same topic',
     ],
   },
@@ -147,7 +146,7 @@ export const SETTING_EVENT_ITEMS = [
 
 export const ANTECEDENT_ITEMS = [
   'Given an instruction or demand',
-  'Corrected or reprimanded',
+  'Corrected or redirected',
   'Alone, with no attention or activity',
   'With peers or other people present',
   'Doing an activity',
@@ -164,13 +163,15 @@ export const ANTECEDENT_ITEMS = [
 // Adding a new consequence checklist item without a clean domain mapping
 // here breaks that matching logic — don't add one without updating this.
 //
-// The attention domain is deliberately split into two entries — adult vs.
-// peer/other attention — so the checklist keeps that distinction visible in
-// UI and exports (brief §2). deriveConsequenceTag's existing first-match
-// resolution already collapses either label to 'attention' with no changes
-// needed there.
+// The attention domain is deliberately split into two entries — staff/
+// support worker vs. peer/other attention — so the checklist keeps that
+// distinction visible in UI and exports (brief §2; "adult" reworded to
+// "staff/support worker" per the wording pass in §0 — this is an adult
+// NDIS/disability-support context, not a school). deriveConsequenceTag's
+// existing first-match resolution already collapses either label to
+// 'attention' with no changes needed there.
 export const CONSEQUENCE_ITEMS: readonly { label: string; domain: ConsequenceTag }[] = [
-  { label: 'Attention (adult) given or avoided', domain: 'attention' },
+  { label: 'Attention (staff/support worker) given or avoided', domain: 'attention' },
   { label: 'Attention (peer/other) given or avoided', domain: 'attention' },
   { label: 'Activity or item provided', domain: 'tangible' },
   { label: 'Sensory outcome obtained or avoided', domain: 'automatic' },

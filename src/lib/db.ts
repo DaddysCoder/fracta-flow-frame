@@ -110,6 +110,19 @@ class FbaDatabase extends Dexie {
           h.practitionerConfidenceRating ??= null
         }),
     )
+
+    // Phase 1.4 (brief §2): informantName/informantRole on FormulationRecord,
+    // backfilled null for existing rows (interview-conducted-with details
+    // weren't captured before this phase).
+    this.version(12).upgrade((tx) =>
+      tx
+        .table('formulations')
+        .toCollection()
+        .modify((f) => {
+          f.informantName ??= null
+          f.informantRole ??= null
+        }),
+    )
   }
 }
 
