@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../lib/db'
-import { recomputeHypothesis } from '../lib/actions'
+import { recomputeHypothesis, setPractitionerConfidenceRating } from '../lib/actions'
 import { DOMAIN_LABELS } from '../lib/screener'
+import { InfoHint } from './InfoHint'
 import type { AgreementStatus, ConfidenceLevel } from '../lib/types'
 
 const AGREEMENT_LABEL: Record<AgreementStatus, string> = {
@@ -27,6 +28,19 @@ const CONFIDENCE_LABEL: Record<ConfidenceLevel, string> = {
 
 const CAVEAT =
   'Even a full match between screener and observed pattern is not equivalent to confirmation via experimental functional analysis. This is a hypothesis for your clinical judgement, not a determination of function.'
+
+// Phase 1.3 (brief §5) — 1 ("not sure") to 6 ("100% sure"), per the guide's
+// Summary of Behaviour form convention. Labels authored for this tool, not
+// sourced text — flagged for practitioner review same as other unsourced
+// starter content in this build.
+const PRACTITIONER_CONFIDENCE_LABELS: Record<1 | 2 | 3 | 4 | 5 | 6, string> = {
+  1: 'Not sure',
+  2: 'Slightly sure',
+  3: 'Somewhat sure',
+  4: 'Fairly sure',
+  5: 'Very sure',
+  6: '100% sure',
+}
 
 export function HypothesisPanel({ behaviourId }: { behaviourId: string }) {
   const screenerCount = useLiveQuery(
@@ -85,6 +99,7 @@ export function HypothesisPanel({ behaviourId }: { behaviourId: string }) {
         >
           {pending ? 'Computing…' : 'Recompute hypothesis'}
         </button>
+        <InfoHint term="hypothesis" />
         <span className="text-xs text-slate-500">
           {latest
             ? `Last computed ${new Date(latest.computedAt).toLocaleString()}`
@@ -112,7 +127,10 @@ export function HypothesisPanel({ behaviourId }: { behaviourId: string }) {
 
           <dl className="grid grid-cols-2 gap-2 text-sm">
             <div>
-              <dt className="text-slate-500">Screener top domain(s)</dt>
+              <dt className="text-slate-500">
+                Screener top domain(s)
+                <InfoHint term="function" />
+              </dt>
               <dd className="text-[#111111] dark:text-white">
                 {latest.screenerFunctionResult.length
                   ? latest.screenerFunctionResult.map((d) => DOMAIN_LABELS[d]).join(', ')
@@ -135,11 +153,42 @@ export function HypothesisPanel({ behaviourId }: { behaviourId: string }) {
             </div>
           </dl>
 
+          <div className="rounded-md border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950 p-3">
+            <p className="text-xs font-medium text-indigo-900 dark:text-indigo-100 mb-1">
+              Your clinical confidence in this hypothesis
+              <span className="font-normal text-indigo-700 dark:text-indigo-300">
+                {' '}
+                — separate from the computed confidence above, this is your own judgement call.
+              </span>
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {([1, 2, 3, 4, 5, 6] as const).map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setPractitionerConfidenceRating(latest.id, n)}
+                  className={`rounded-md border px-2 py-1 text-xs ${
+                    latest.practitionerConfidenceRating === n
+                      ? 'border-indigo-600 bg-indigo-600 text-white'
+                      : 'border-indigo-300 dark:border-indigo-700 text-indigo-900 dark:text-indigo-200'
+                  }`}
+                >
+                  {n} — {PRACTITIONER_CONFIDENCE_LABELS[n]}
+                </button>
+              ))}
+            </div>
+            {latest.practitionerConfidenceRating == null && (
+              <p className="text-xs text-indigo-700 dark:text-indigo-300 mt-1">Not yet rated.</p>
+            )}
+          </div>
+
           {showNudge && (
             <div className="rounded-md border border-blue-300 bg-blue-50 dark:bg-blue-950 dark:border-blue-700 p-3 text-sm text-blue-900 dark:text-blue-200">
               {latest.agreementStatus === 'mismatch'
                 ? 'Screener and episode data disagree. Consider continuing descriptive data collection, or discussing experimental functional analysis with a senior practitioner.'
                 : 'Confidence remains low after a reasonable number of episodes. Consider continuing descriptive data collection across more days, or experimental functional analysis.'}
+              {' '}Once the function is clearer, consider what alternative behaviour
+              <InfoHint term="alternativeBehaviour" /> could meet the same need more safely.
             </div>
           )}
 

@@ -103,6 +103,20 @@ export interface FunctionHypothesis {
   // Audit trail — required, not optional. Every hypothesis must show its receipts.
   contributingEpisodeIds: string[]
   contributingScreenerIds: string[]
+
+  // Phase 1.3 (brief §5) — practitioner's own clinical-judgement confidence,
+  // 1 ("not sure") to 6 ("100% sure"), per the guide's Summary of Behaviour
+  // form convention. Deliberately kept as a sibling field on the same
+  // record rather than merged into confidenceLevel: confidenceLevel is
+  // entirely data-derived (computed by hypothesis.ts, which this phase does
+  // not touch), while this is the practitioner's own judgement call, set
+  // separately after reviewing the computed result. null until set.
+  // Optional (rather than required) specifically so pre-existing test
+  // factories that construct a FunctionHypothesis without this field (e.g.
+  // riskFlags.test.ts, which brief §7 requires stay byte-identical to
+  // phase-1.2) keep compiling unmodified. Treat a missing/undefined value
+  // the same as null ("not yet rated") wherever this is read.
+  practitionerConfidenceRating?: 1 | 2 | 3 | 4 | 5 | 6 | null
 }
 
 // Phase 3 — escalation & documentation (brief §2).

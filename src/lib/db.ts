@@ -99,6 +99,17 @@ class FbaDatabase extends Dexie {
     this.version(10).stores({
       reportInvites: 'id, behaviourId, token, status, createdAt',
     })
+
+    // Phase 1.3 (brief §5): practitioner self-rated confidence on
+    // FunctionHypothesis, backfilled null (not yet rated) for existing rows.
+    this.version(11).upgrade((tx) =>
+      tx
+        .table('hypotheses')
+        .toCollection()
+        .modify((h) => {
+          h.practitionerConfidenceRating ??= null
+        }),
+    )
   }
 }
 

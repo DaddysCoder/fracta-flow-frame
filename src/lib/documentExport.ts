@@ -1,5 +1,6 @@
 import { DOMAIN_LABELS } from './screener'
 import { SEVERITY_SCALE } from './scales'
+import { buildSummaryStatement } from './summaryStatement'
 import type {
   Behaviour,
   DocumentationFormat,
@@ -153,11 +154,17 @@ function topSettingEvents(episodes: Episode[]): string {
   return `<ul>${sorted.map(([k, v]) => `<li>${escapeHtml(k)} (${v}x)</li>`).join('')}</ul>`
 }
 
+function summaryStatementBlock(b: BehaviourExportData): string {
+  const statement = buildSummaryStatement(b.behaviour, b.episodes, b.latestHypothesis)
+  return `<p class="summary-statement"><strong>Summary statement:</strong> ${escapeHtml(statement)}</p>`
+}
+
 function renderClinicalReport(b: BehaviourExportData): string {
   return `
     <section class="behaviour">
       <h2>${escapeHtml(b.behaviour.name)}</h2>
       <p><strong>Operational definition:</strong> ${escapeHtml(b.behaviour.operationalDefinition)}</p>
+      ${summaryStatementBlock(b)}
       <h3>Function hypothesis</h3>
       ${hypothesisSummary(b.latestHypothesis)}
       <h3>Function screener(s)</h3>
@@ -179,6 +186,7 @@ function renderPlanAppendix(b: BehaviourExportData): string {
     <section class="behaviour">
       <h2>${escapeHtml(b.behaviour.name)}</h2>
       <p><strong>Operational definition:</strong> ${escapeHtml(b.behaviour.operationalDefinition)}</p>
+      ${summaryStatementBlock(b)}
       <h3>Current hypothesis</h3>
       ${hypothesisSummary(b.latestHypothesis)}
       <p><strong>Evidence basis:</strong> ${b.episodes.length} episode(s) logged, ${escapeHtml(dateRange)}.</p>
@@ -194,6 +202,7 @@ function renderStaffTrainingSummary(b: BehaviourExportData): string {
     <section class="behaviour">
       <h2>${escapeHtml(b.behaviour.name)}</h2>
       <p><strong>What this looks like:</strong> ${escapeHtml(b.behaviour.operationalDefinition)}</p>
+      ${summaryStatementBlock(b)}
       <h3>Known triggers / setting events</h3>
       ${topSettingEvents(b.episodes)}
       <h3>Current status</h3>
@@ -235,6 +244,7 @@ export function renderDocumentationExport(input: RenderInput): string {
   table.kv th, table.kv td { border: 1px solid #cbd5e1; padding: 0.4rem 0.6rem; text-align: left; vertical-align: top; }
   table.kv th { background: #f1f5f9; width: 220px; }
   .caveat { font-size: 0.85rem; color: #92400e; background: #fffbeb; border: 1px solid #fde68a; padding: 0.5rem; border-radius: 4px; }
+  .summary-statement { background: #f8fafc; border: 1px solid #e2e8f0; padding: 0.6rem 0.75rem; border-radius: 4px; }
   .stub-note { font-size: 0.85rem; color: #64748b; }
   .meta { font-size: 0.85rem; color: #64748b; }
   @media print { body { margin: 0; } }

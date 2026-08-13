@@ -3,6 +3,7 @@ import { addBehaviourChecklistItem, createEpisode } from '../lib/actions'
 import { usePractitioner } from '../lib/practitioner'
 import { useBehaviourChecklistItems } from '../lib/checklists'
 import { ChecklistField } from './ChecklistField'
+import { InfoHint } from './InfoHint'
 import { deriveConsequenceTag, FREQUENCY_SCALE, RISK_FLAG_OPTIONS, SEVERITY_SCALE } from '../lib/scales'
 import type { ConsequenceTag, RiskFlagItem } from '../lib/types'
 
@@ -114,6 +115,7 @@ export function EpisodeForm({ behaviourId }: { behaviourId: string }) {
 
       <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
         Setting event (free text)
+        <InfoHint term="settingEvent" />
         <input
           value={settingEvent}
           onChange={(e) => setSettingEvent(e.target.value)}
@@ -136,6 +138,7 @@ export function EpisodeForm({ behaviourId }: { behaviourId: string }) {
         <div className="space-y-2">
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
             Antecedent (free text)
+            <InfoHint term="antecedent" />
             <textarea
               required
               value={antecedentText}
@@ -159,6 +162,7 @@ export function EpisodeForm({ behaviourId }: { behaviourId: string }) {
         <div className="space-y-2">
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
             Consequence (free text)
+            <InfoHint term="consequence" />
             <textarea
               required
               value={consequenceText}
@@ -183,6 +187,7 @@ export function EpisodeForm({ behaviourId }: { behaviourId: string }) {
           <p className="text-xs text-slate-400">
             Rolls up to function domain: <span className="font-medium">{derivedConsequenceTag}</span>
             {consequenceTags.length === 0 && ' (no consequence selected yet)'}
+            <InfoHint term="reinforcement" />
           </p>
         </div>
       </div>

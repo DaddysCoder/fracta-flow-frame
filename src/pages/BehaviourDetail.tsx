@@ -11,6 +11,8 @@ import { FlagsPanel } from '../components/FlagsPanel'
 import { HandoffPanel } from '../components/HandoffPanel'
 import { FormulationForm } from '../components/FormulationForm'
 import { FormulationList } from '../components/FormulationList'
+import { InfoHint } from '../components/InfoHint'
+import { buildSummaryStatement } from '../lib/summaryStatement'
 
 type Tab = 'episodes' | 'formulation' | 'screener' | 'triangulation' | 'flags' | 'handoff'
 
@@ -30,9 +32,22 @@ export function BehaviourDetail() {
     () => (behaviour ? db.participants.get(behaviour.participantId) : undefined),
     [behaviour],
   )
+  const episodes = useLiveQuery(
+    () => db.episodes.where('behaviourId').equals(behaviourId).toArray(),
+    [behaviourId],
+  )
+  const latestHypothesis = useLiveQuery(async () => {
+    const all = await db.hypotheses.where('behaviourId').equals(behaviourId).sortBy('computedAt')
+    return all.length ? all[all.length - 1] : null
+  }, [behaviourId])
   const [tab, setTab] = useState<Tab>('episodes')
 
   if (!behaviour) return <p className="text-sm text-slate-500">Loading…</p>
+
+  const summaryStatement =
+    episodes !== undefined && latestHypothesis !== undefined
+      ? buildSummaryStatement(behaviour, episodes, latestHypothesis)
+      : null
 
   return (
     <div className="space-y-6">
@@ -48,6 +63,16 @@ export function BehaviourDetail() {
           <p className="text-xs text-slate-400 mt-1">{behaviour.concernCategories.join(', ')}</p>
         )}
       </div>
+
+      {summaryStatement && (
+        <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">
+            Summary statement
+            <InfoHint term="summaryStatement" />
+          </h2>
+          <p className="text-sm text-[#111111] dark:text-white">{summaryStatement}</p>
+        </div>
+      )}
 
       <div className="flex gap-1 border-b border-slate-200 dark:border-slate-800 flex-wrap">
         {(['episodes', 'formulation', 'screener', 'triangulation', 'flags', 'handoff'] as Tab[]).map((t) => (

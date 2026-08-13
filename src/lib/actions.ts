@@ -184,6 +184,10 @@ export async function recomputeHypothesis(behaviourId: string): Promise<ComputeO
       id: newId(),
       behaviourId,
       computedAt: new Date().toISOString(),
+      // Not part of hypothesis.ts's computed result (untouched by this
+      // phase) — practitioner sets this afterwards via
+      // setPractitionerConfidenceRating.
+      practitionerConfidenceRating: null,
       ...outcome.result,
     })
 
@@ -193,6 +197,16 @@ export async function recomputeHypothesis(behaviourId: string): Promise<ComputeO
     }
   }
   return outcome
+}
+
+// Phase 1.3 (brief §5) — practitioner's own clinical-judgement confidence
+// rating on an already-computed hypothesis. Kept as a distinct update from
+// recomputeHypothesis so setting it never triggers a recompute or touches
+// the computed fields.
+export async function setPractitionerConfidenceRating(hypothesisId: string, rating: 1 | 2 | 3 | 4 | 5 | 6) {
+  const hypothesis = await db.hypotheses.get(hypothesisId)
+  if (!hypothesis) throw new Error('Hypothesis not found')
+  await db.hypotheses.update(hypothesisId, { practitionerConfidenceRating: rating })
 }
 
 // Skips raising a new flag if one of the same triggerType is already open for

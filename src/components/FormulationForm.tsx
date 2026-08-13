@@ -2,6 +2,7 @@ import { type FormEvent, useState } from 'react'
 import { createFormulation } from '../lib/actions'
 import { usePractitioner } from '../lib/practitioner'
 import { ChecklistField } from './ChecklistField'
+import { InfoHint } from './InfoHint'
 import { emptyEscalationCycle, ESCALATION_PHASE_ITEMS, ESCALATION_PHASE_LABELS, ESCALATION_PHASE_ORDER } from '../lib/scales'
 import type { EscalationPhase, EscalationPhaseData } from '../lib/types'
 
@@ -81,7 +82,10 @@ export function FormulationForm({ behaviourId }: { behaviourId: string }) {
       className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-4"
     >
       <div>
-        <h2 className="text-sm font-semibold text-[#111111] dark:text-white">New formulation record</h2>
+        <h2 className="text-sm font-semibold text-[#111111] dark:text-white">
+          New formulation record
+          <InfoHint term="behaviour" />
+        </h2>
         <p className="text-xs text-slate-500 mt-1">
           Used once, early, at initial assessment — separate from ongoing episode logging. Every
           prompt is scaffolding for the conversation; nothing here is required.
@@ -110,6 +114,7 @@ export function FormulationForm({ behaviourId }: { behaviourId: string }) {
 
       <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
         What happened right before it, and how did you respond?
+        <InfoHint term="antecedent" />
         <textarea
           value={descriptionAntecedentAndResponse}
           onChange={(e) => setDescriptionAntecedentAndResponse(e.target.value)}

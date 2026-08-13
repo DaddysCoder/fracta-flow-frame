@@ -40,48 +40,122 @@ export const RISK_FLAG_OPTIONS = [
   { value: 'other', label: 'Other risk' },
 ] as const
 
-// Phase 1.1 (brief §2). General PBS/ABA field convention, not sourced from
-// any single licensed instrument — same "openly-citable, not a specific
-// paid provider's list" principle as the rest of this build. Flagged in the
-// brief as a starting set to review against real caseload data, not treated
-// as authoritative here.
-export const BEHAVIOUR_CONCERN_CATEGORIES = [
-  'Physical aggression (toward others)',
-  'Verbal aggression',
-  'Self-injurious behaviour',
-  'Property destruction',
-  'Elopement/absconding',
-  'Non-compliance/refusal',
-  'Repetitive/stereotyped behaviour',
-  'Verbal disruption',
-  'Inappropriate sexual behaviour',
-] as const
+// Phase 1.3 (brief §1). Adapted from the "Problem Behaviour Inventory"
+// structure in LaVigna & Willis, as referenced by the Guide to Functional
+// Behaviour Assessment for Schools (Qld Dept of Education). The source
+// wording is school/child-context checklist language ("runs around the
+// classroom", "refuses to do classwork", etc.) — every item below has been
+// reworded from that context into general NDIS/disability-support wording,
+// not imported verbatim. This is a starting set for human clinical review
+// before being treated as final, same caveat as every other starter list
+// in this build.
+export interface ConcernCategoryGroup {
+  heading: string
+  items: string[]
+}
 
-// Phase 1.1 (brief §4) — ABC checklists. "Other" is handled in the UI: it
-// reveals a free-text input whose value gets appended to the checklist for
-// reuse, same pattern as the concern categories above.
+export const BEHAVIOUR_CONCERN_GROUPS: ConcernCategoryGroup[] = [
+  {
+    heading: 'Aggression / harm to others',
+    items: [
+      'Hits others',
+      'Bites others',
+      'Kicks others',
+      'Pinches others',
+      'Scratches others',
+      'Spits at others',
+      'Strikes others with an object',
+      'Threatens others',
+      'Physically fights with others',
+    ],
+  },
+  {
+    heading: 'Property / environment',
+    items: [
+      'Throws objects',
+      'Breaks things intentionally',
+      'Turns over furniture',
+      'Damages property',
+    ],
+  },
+  {
+    heading: 'Self-directed',
+    items: [
+      'Attempts to hurt self',
+      'Bangs head',
+      'Bites, scratches, or hits self',
+      'Throws body against objects or surfaces',
+    ],
+  },
+  {
+    heading: 'Elopement / unsafe wandering',
+    items: [
+      'Runs away from support person or setting',
+      'Wanders off unsupervised',
+      'Climbs or jumps on furniture',
+    ],
+  },
+  {
+    heading: 'Verbal / vocal',
+    items: [
+      'Shouts angrily',
+      'Yells or screams',
+      'Swears',
+      'Makes verbal threats',
+    ],
+  },
+  {
+    heading: 'Non-compliance / avoidance',
+    items: [
+      'Says no to requests',
+      'Refuses to follow instructions',
+      'Does the opposite of what is asked',
+      "Doesn't respond to direction",
+    ],
+  },
+  {
+    heading: 'Repetitive / unusual',
+    items: [
+      'Counts or checks things repeatedly',
+      'Talks to self',
+      'Repeatedly brings up the same topic',
+    ],
+  },
+]
+
+// Phase 1.3 (brief §2) — replaces the Phase 1.1 placeholder ABC checklists.
+// Adapted from the FACTS (Functional Assessment Checklist for Teachers and
+// Staff; March, Horner, Lewis-Palmer, Brown, Crone & Todd, 1999) as
+// referenced by the Guide to Functional Behaviour Assessment for Schools
+// (Qld Dept of Education). Reworded from school-context wording into
+// general NDIS/disability-support context, not imported verbatim. "Other"
+// is handled in the UI: it reveals a free-text input whose value gets
+// appended to the checklist for reuse, same pattern as the concern
+// categories above. Since Phase 1.2, these are the generic fallback lists
+// that checklists.ts unions with per-behaviour custom items — the union
+// logic itself is unchanged by this phase.
 
 export const SETTING_EVENT_ITEMS = [
-  'Illness/unwellness',
-  'Poor sleep',
   'Hunger',
+  'Conflict at home or elsewhere',
+  'Missed medication',
+  'Illness',
+  'Lack of sleep',
   'Change in routine',
-  'Change in environment',
-  'Medication change',
-  'Sensory overload (noise/crowding/lighting)',
-  'Transition between activities',
-  'Presence of unfamiliar person',
+  'Recent failure or setback',
 ] as const
 
 export const ANTECEDENT_ITEMS = [
-  'Demand/instruction given',
-  'Request denied',
-  'Attention withdrawn',
-  'Transition required',
-  'Preferred item/activity removed',
-  'Waiting required',
-  'Unexpected change',
-  'Sensory trigger',
+  'Given an instruction or demand',
+  'Corrected or reprimanded',
+  'Alone, with no attention or activity',
+  'With peers or other people present',
+  'Doing an activity',
+  'Activity or item removed',
+  'Transition between activities',
+  'Task was too hard',
+  'Task went on too long',
+  'Unstructured time',
 ] as const
 
 // Every entry must map to exactly one FAST domain (or 'none_observed') —
@@ -89,16 +163,18 @@ export const ANTECEDENT_ITEMS = [
 // logic depends on (brief §4 hard constraint, carried over from Phase 2).
 // Adding a new consequence checklist item without a clean domain mapping
 // here breaks that matching logic — don't add one without updating this.
+//
+// The attention domain is deliberately split into two entries — adult vs.
+// peer/other attention — so the checklist keeps that distinction visible in
+// UI and exports (brief §2). deriveConsequenceTag's existing first-match
+// resolution already collapses either label to 'attention' with no changes
+// needed there.
 export const CONSEQUENCE_ITEMS: readonly { label: string; domain: ConsequenceTag }[] = [
-  { label: 'Received staff/peer attention', domain: 'attention' },
-  { label: 'Received reprimand/reaction', domain: 'attention' },
-  { label: 'Task/demand removed', domain: 'escape' },
-  { label: 'Activity ended', domain: 'escape' },
-  { label: 'Removed from situation', domain: 'escape' },
-  { label: 'Preferred item given', domain: 'tangible' },
-  { label: 'Preferred activity allowed', domain: 'tangible' },
-  { label: 'No clear external consequence observed', domain: 'automatic' },
-  { label: 'Self-soothing/sensory outcome', domain: 'automatic' },
+  { label: 'Attention (adult) given or avoided', domain: 'attention' },
+  { label: 'Attention (peer/other) given or avoided', domain: 'attention' },
+  { label: 'Activity or item provided', domain: 'tangible' },
+  { label: 'Sensory outcome obtained or avoided', domain: 'automatic' },
+  { label: 'Task or activity avoided', domain: 'escape' },
   { label: 'None observed', domain: 'none_observed' },
 ]
 

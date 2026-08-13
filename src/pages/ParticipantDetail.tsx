@@ -5,7 +5,7 @@ import { db } from '../lib/db'
 import { createBehaviour } from '../lib/actions'
 import { usePractitioner } from '../lib/practitioner'
 import { ExportPanel } from '../components/ExportPanel'
-import { BEHAVIOUR_CONCERN_CATEGORIES } from '../lib/scales'
+import { BEHAVIOUR_CONCERN_GROUPS } from '../lib/scales'
 
 type Section = 'behaviours' | 'documentation'
 
@@ -125,21 +125,31 @@ export function ParticipantDetail() {
                   placeholder="Observable, measurable description — no interpretation of intent or cause"
                 />
               </label>
-              <div>
-                <span className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+              <div className="space-y-3">
+                <span className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                   Behaviours of concern (optional, in addition to the name above)
                 </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
-                  {BEHAVIOUR_CONCERN_CATEGORIES.map((category) => (
-                    <label key={category} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-                      <input
-                        type="checkbox"
-                        checked={selectedCategories.has(category)}
-                        onChange={() => toggleCategory(category)}
-                      />
-                      {category}
-                    </label>
-                  ))}
+                {BEHAVIOUR_CONCERN_GROUPS.map((group) => (
+                  <fieldset key={group.heading} className="border border-slate-200 dark:border-slate-800 rounded-md p-2">
+                    <legend className="text-xs font-semibold uppercase tracking-wide text-slate-500 px-1">
+                      {group.heading}
+                    </legend>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
+                      {group.items.map((category) => (
+                        <label key={category} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                          <input
+                            type="checkbox"
+                            checked={selectedCategories.has(category)}
+                            onChange={() => toggleCategory(category)}
+                          />
+                          {category}
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
+                ))}
+                <fieldset className="border border-slate-200 dark:border-slate-800 rounded-md p-2">
+                  <legend className="text-xs font-semibold uppercase tracking-wide text-slate-500 px-1">Other</legend>
                   <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
                     <input
                       type="checkbox"
@@ -148,15 +158,15 @@ export function ParticipantDetail() {
                     />
                     Other
                   </label>
-                </div>
-                {showOtherCategory && (
-                  <input
-                    value={otherCategory}
-                    onChange={(e) => setOtherCategory(e.target.value)}
-                    placeholder="Describe the category"
-                    className="mt-2 block w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm"
-                  />
-                )}
+                  {showOtherCategory && (
+                    <input
+                      value={otherCategory}
+                      onChange={(e) => setOtherCategory(e.target.value)}
+                      placeholder="Describe the category"
+                      className="mt-2 block w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm"
+                    />
+                  )}
+                </fieldset>
               </div>
               <button
                 type="submit"
