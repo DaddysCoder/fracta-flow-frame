@@ -1,0 +1,14 @@
+{
+  // Cloudflare deploy config for this static Vite/PWA build — no server-side
+  // Worker code, just the built `dist/` assets. "single-page-application"
+  // fallback is required because routing is client-side (react-router's
+  // BrowserRouter): without it, a hard refresh or shared link to a route
+  // like /participants/:id or /behaviours/:id would 404 instead of being
+  // served index.html and resolved client-side.
+  "name": "fba-screener",
+  "compatibility_date": "2026-08-13",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+}
