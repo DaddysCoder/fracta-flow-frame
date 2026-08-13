@@ -1,11 +1,15 @@
 # Phase 1.4 — wording audit (flag, don't silently change)
 
 Per brief §0a: this is a flagged list for human review, not an auto-edit. Only the
-four items in §0 were changed directly; everything below needs a practitioner's
+four items in §0 were changed directly; everything below needed a practitioner's
 explicit sign-off before wording changes, same as every other unsourced
 starter list in this build.
 
-Columns: **Item** — **Where** — **What's flagged** — **Suggested alternative (if any)**.
+**Status: closed.** Every item below now has an explicit decision (Phase 1.5),
+recorded in the "Decision" column. See `scales.ts` and `FormulationForm.tsx` for
+the applied changes.
+
+Columns: **Item** — **Where** — **What's flagged** — **Suggested alternative (if any)** — **Decision**.
 
 ## Already fixed (§0, for reference — not part of this review)
 
@@ -16,18 +20,16 @@ Columns: **Item** — **Where** — **What's flagged** — **Suggested alternati
 | "Corrected or reprimanded" | `ANTECEDENT_ITEMS` | → "Corrected or redirected" |
 | "Does the opposite of what is asked" | `BEHAVIOUR_CONCERN_GROUPS` | → "Acts contrary to the direction given" |
 
-## Flagged for review
+## Flagged for review — now resolved
 
-| Item | Where | What's flagged | Suggested alternative |
-|---|---|---|---|
-| "Avoiding eye contact" | `ESCALATION_PHASE_ITEMS.early_warning` | Pathologizing risk — reduced/no eye contact is a baseline communication style for many autistic/neurodivergent people, not necessarily an escalation precursor. Listing it as a generic "early warning" sign risks flagging ordinary neurodivergent presentation as crisis-adjacent. | Remove, or reframe as person-specific ("a *change* from this person's usual eye contact"), decided per-behaviour rather than as a generic starter item. |
-| "Fidgeting" | `ESCALATION_PHASE_ITEMS.early_warning` | Same pathologizing risk — fidgeting/stimming is frequently a baseline self-regulation behaviour, not an early-warning sign. | Remove, or reframe as "a change from baseline movement/stimming." |
-| "Pacing" | `ESCALATION_PHASE_ITEMS.early_warning` | Same category of concern — pacing can be an ordinary self-regulation strategy rather than an escalation indicator. | Consider reframing as relative to baseline, same as the two above. |
-| "Muttering" | `ESCALATION_PHASE_ITEMS.early_warning` | Same self-talk/vocal-stimming concern already addressed for "Talks to self" in the Behaviours of Concern list (§0) — this item lives in the same family and wasn't caught by that fix. "Muttering" also carries a mildly dismissive/pejorative tone. | Remove, or reframe neutrally (e.g. "vocalising or talking to self more than usual for this person"). |
-| "Refuses to follow instructions" | `BEHAVIOUR_CONCERN_GROUPS.Non-compliance / avoidance` | Punitive/compliance-framed register — "refuses" casts non-compliance (which is sometimes an appropriate communication of "no") in a negative light, echoing school-discipline framing. | Consider "Does not follow instructions given" — neutral, observable, no judgement about why. |
-| "Task was too hard" / "Task went on too long" | `ANTECEDENT_ITEMS` | Informal, slightly childish phrasing ("was too hard") that reads more like a classroom-observation note than adult clinical documentation. | "Task exceeded the person's current skill level" / "Task continued longer than the person could sustain" — though these read more clinical/less plain-language, so there's a real trade-off against the screener's support-worker audience; flagging rather than pre-deciding. |
-| "With peers or other people present" | `ANTECEDENT_ITEMS` | Minor — "peers" is a school-register word, though it's also in ordinary use in adult disability/day-program settings (peer support, peer groups), so this is a low-confidence flag rather than a clear miss. | Optionally "With other people present" for a fully age-neutral register, if "peers" reads too school-specific in your services. |
-| "Doesn't respond to direction" | `BEHAVIOUR_CONCERN_GROUPS.Non-compliance / avoidance` | Style-only: informal contraction ("Doesn't") inconsistent with the more formal register used elsewhere in the same list. | "Does not respond to direction" for consistency — cosmetic only. |
+| Item | Where | What's flagged | Suggested alternative | Decision |
+|---|---|---|---|---|
+| "Avoiding eye contact" / "Fidgeting" / "Pacing" | `ESCALATION_PHASE_ITEMS.early_warning` | Pathologizing risk — reduced eye contact, fidgeting, and pacing are baseline traits/self-regulation strategies for many neurodivergent people, not necessarily escalation precursors. | Remove, or reframe as person-specific ("a *change* from this person's usual presentation"). | **Kept as-is**, wording unchanged. Instead, `FormulationForm.tsx`'s Early Warning checklist now carries an explicit prompt instructing the practitioner to select only items representing a change from this person's own baseline (as recorded in the Baseline phase directly above it) — the mechanism was already implicit (Baseline phase exists precisely to establish that reference point); this makes it explicit rather than adding new wording caveats to each item. |
+| "Muttering" | `ESCALATION_PHASE_ITEMS.early_warning` | Same self-talk/vocal-stimming concern as "Talks to self" (§0) — this item lives in the same family and wasn't caught by that fix. Also mildly dismissive in tone. | Reframe neutrally (e.g. "vocalising or talking to self more than usual for this person"). | **Changed** → "Vocalising or talking to self more than usual for this person". |
+| "Refuses to follow instructions" | `BEHAVIOUR_CONCERN_GROUPS.Non-compliance / avoidance` | Punitive/compliance-framed register — "refuses" casts non-compliance (sometimes an appropriate communication of "no") in a negative light. | "Does not follow instructions given" — neutral, observable. | **Changed** → "Does not follow instructions given". |
+| "Task was too hard" / "Task went on too long" | `ANTECEDENT_ITEMS` | Informal, slightly childish phrasing that reads like a classroom-observation note. | "Task exceeded the person's current skill level" / "Task continued longer than the person could sustain". | **Changed** → "Task was difficult for the person" / "Task continued longer than the person could manage" — a middle ground between the fully clinical alternative and the original informal phrasing, kept in plain language for the support-worker audience. |
+| "With peers or other people present" | `ANTECEDENT_ITEMS` | Minor, low-confidence flag — "peers" is in ordinary use in adult disability/day-program settings too. | Optionally "With other people present". | **No change** — left as-is. |
+| "Doesn't respond to direction" | `BEHAVIOUR_CONCERN_GROUPS.Non-compliance / avoidance` | Style-only: informal contraction inconsistent with the rest of the list's register. | "Does not respond to direction". | **Changed** → "Does not respond to direction". Grepped the rest of the checklist/label content (`scales.ts`, `terminology.ts`) for other stray contractions (`\w+n't\b`) — this was the only one found. |
 
 ## Areas checked with no findings
 

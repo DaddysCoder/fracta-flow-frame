@@ -203,14 +203,23 @@ export function FormulationForm({ behaviourId }: { behaviourId: string }) {
         </p>
         <div className="space-y-3">
           {ESCALATION_PHASE_ORDER.map((phase) => (
-            <ChecklistField
-              key={phase}
-              label={ESCALATION_PHASE_LABELS[phase]}
-              items={[...ESCALATION_PHASE_ITEMS[phase], ...escalationCycle[phase].customItems]}
-              selected={escalationCycle[phase].checkedItems}
-              onToggle={(item) => togglePhaseItem(phase, item)}
-              onAddCustom={(item) => addPhaseCustomItem(phase, item)}
-            />
+            <div key={phase}>
+              {phase === 'early_warning' && (
+                <p className="text-xs text-slate-500 mb-1">
+                  Select only items that represent a change from this person's own usual
+                  presentation, as recorded above in Baseline — not generic traits some people
+                  simply have all the time (e.g. limited eye contact or stimming as an ordinary
+                  self-regulation style is not, by itself, an early warning sign).
+                </p>
+              )}
+              <ChecklistField
+                label={ESCALATION_PHASE_LABELS[phase]}
+                items={[...ESCALATION_PHASE_ITEMS[phase], ...escalationCycle[phase].customItems]}
+                selected={escalationCycle[phase].checkedItems}
+                onToggle={(item) => togglePhaseItem(phase, item)}
+                onAddCustom={(item) => addPhaseCustomItem(phase, item)}
+              />
+            </div>
           ))}
         </div>
       </div>

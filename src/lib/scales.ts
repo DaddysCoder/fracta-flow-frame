@@ -108,9 +108,9 @@ export const BEHAVIOUR_CONCERN_GROUPS: ConcernCategoryGroup[] = [
     heading: 'Non-compliance / avoidance',
     items: [
       'Says no to requests',
-      'Refuses to follow instructions',
+      'Does not follow instructions given',
       'Acts contrary to the direction given',
-      "Doesn't respond to direction",
+      'Does not respond to direction',
     ],
   },
   {
@@ -152,8 +152,8 @@ export const ANTECEDENT_ITEMS = [
   'Doing an activity',
   'Activity or item removed',
   'Transition between activities',
-  'Task was too hard',
-  'Task went on too long',
+  'Task was difficult for the person',
+  'Task continued longer than the person could manage',
   'Unstructured time',
 ] as const
 
@@ -206,6 +206,16 @@ export function deriveConsequenceTag(
 // licensed instrument. Starting items per phase — review against real
 // caseload data before treating as authoritative, same caveat as every
 // other starter list in this build.
+//
+// early_warning wording decision (Phase 1.4 §0a audit, resolved Phase 1.5):
+// "Avoiding eye contact", "Fidgeting", and "Pacing" were flagged as risking
+// pathologizing ordinary neurodivergent baseline traits (stimming, reduced
+// eye contact) as escalation precursors. Reviewed and approved to KEEP as
+// generic starter items — but the FormulationForm UI now carries an
+// explicit prompt above the Early Warning checklist instructing the
+// practitioner to select only items that represent a change from this
+// person's own baseline (recorded in the Baseline phase immediately
+// above it), rather than leaving that judgement call implicit.
 export const ESCALATION_PHASE_ORDER: EscalationPhase[] = [
   'baseline',
   'early_warning',
@@ -230,7 +240,7 @@ export const ESCALATION_PHASE_ITEMS: Record<EscalationPhase, string[]> = {
     'Pacing',
     'Fidgeting',
     'Withdrawing',
-    'Muttering',
+    'Vocalising or talking to self more than usual for this person',
     'Tense posture',
     'Avoiding eye contact',
   ],
