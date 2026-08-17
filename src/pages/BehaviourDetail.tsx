@@ -12,6 +12,7 @@ import { HandoffPanel } from '../components/HandoffPanel'
 import { FormulationForm } from '../components/FormulationForm'
 import { FormulationList } from '../components/FormulationList'
 import { SummaryStatementPanel } from '../components/SummaryStatementPanel'
+import { BehaviourTrendChart } from '../components/BehaviourTrendChart'
 
 type Tab = 'formulation' | 'episodes' | 'screener' | 'triangulation' | 'flags' | 'handoff'
 
@@ -74,6 +75,7 @@ export function BehaviourDetail() {
 
       {tab === 'episodes' && (
         <div className="space-y-6">
+          <BehaviourTrendChart behaviourId={behaviourId} />
           <EpisodeForm behaviourId={behaviourId} />
           <EpisodeList behaviourId={behaviourId} />
         </div>
