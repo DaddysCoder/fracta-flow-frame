@@ -1,5 +1,6 @@
 import { DOMAIN_LABELS } from './screener'
 import { SEVERITY_SCALE } from './scales'
+import { computeSummaryStatement } from './summaryStatement'
 import type {
   Behaviour,
   DocumentationFormat,
@@ -153,11 +154,21 @@ function topSettingEvents(episodes: Episode[]): string {
   return `<ul>${sorted.map(([k, v]) => `<li>${escapeHtml(k)} (${v}x)</li>`).join('')}</ul>`
 }
 
+function summaryStatementSection(b: BehaviourExportData): string {
+  const summary = computeSummaryStatement(b.behaviour.name, b.episodes, b.latestHypothesis)
+  const badge = summary.completeness === 'full' ? 'Complete' : 'Partial — gaps remain'
+  return `
+    <h3>Summary statement <span class="stub-note">(${escapeHtml(badge)})</span></h3>
+    <p>${escapeHtml(summary.rendered)}</p>
+  `
+}
+
 function renderClinicalReport(b: BehaviourExportData): string {
   return `
     <section class="behaviour">
       <h2>${escapeHtml(b.behaviour.name)}</h2>
       <p><strong>Operational definition:</strong> ${escapeHtml(b.behaviour.operationalDefinition)}</p>
+      ${summaryStatementSection(b)}
       <h3>Function hypothesis</h3>
       ${hypothesisSummary(b.latestHypothesis)}
       <h3>Function screener(s)</h3>
@@ -179,6 +190,7 @@ function renderPlanAppendix(b: BehaviourExportData): string {
     <section class="behaviour">
       <h2>${escapeHtml(b.behaviour.name)}</h2>
       <p><strong>Operational definition:</strong> ${escapeHtml(b.behaviour.operationalDefinition)}</p>
+      ${summaryStatementSection(b)}
       <h3>Current hypothesis</h3>
       ${hypothesisSummary(b.latestHypothesis)}
       <p><strong>Evidence basis:</strong> ${b.episodes.length} episode(s) logged, ${escapeHtml(dateRange)}.</p>

@@ -11,6 +11,7 @@ import { FlagsPanel } from '../components/FlagsPanel'
 import { HandoffPanel } from '../components/HandoffPanel'
 import { FormulationForm } from '../components/FormulationForm'
 import { FormulationList } from '../components/FormulationList'
+import { SummaryStatementPanel } from '../components/SummaryStatementPanel'
 
 type Tab = 'formulation' | 'episodes' | 'screener' | 'triangulation' | 'flags' | 'handoff'
 
@@ -45,6 +46,8 @@ export function BehaviourDetail() {
         <h1 className="text-xl font-display font-bold text-[#111111] dark:text-white mt-1">{behaviour.name}</h1>
         <p className="text-sm text-slate-500 mt-1">{behaviour.operationalDefinition}</p>
       </div>
+
+      <SummaryStatementPanel behaviourId={behaviourId} />
 
       <div className="flex gap-1 border-b border-slate-200 dark:border-slate-800">
         {(['formulation', 'episodes', 'screener', 'triangulation', 'flags', 'handoff'] as Tab[]).map((t) => (
