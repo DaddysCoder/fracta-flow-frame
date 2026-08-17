@@ -173,6 +173,21 @@ export interface ScreenerInvite {
   status: ScreenerInviteStatus
 }
 
+// Phase 1.3 — incident/ABC reporting over the same two-QR mechanism (brief
+// Part B, step 11). A separate table from ScreenerInvite, even though the
+// shape is identical, so the two invite kinds can't be confused at the
+// token-lookup stage.
+export type IncidentInviteStatus = 'pending' | 'completed' | 'cancelled'
+
+export interface IncidentInvite {
+  id: string
+  behaviourId: string // local only — never transmitted through the QR/URL
+  token: string
+  informantRole: string
+  createdAt: string
+  status: IncidentInviteStatus
+}
+
 // Phase 1.2 — formulation becomes a collection, escalation cycle (brief Part B, steps 2-3).
 // Matches @fracta/contract's EscalationPhase values exactly, since the
 // resolved display text for these phases is what crosses into

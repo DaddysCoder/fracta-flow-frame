@@ -16,6 +16,7 @@ import { computeHypothesis, type ComputeOutcome } from './hypothesis'
 import { checkEpisodeTriggers, checkHypothesisTriggers, type FlagCandidate } from './riskFlags'
 import { renderDocumentationExport, type HtmlDocumentationFormat } from './documentExport'
 import { buildInviteUrl, generateToken } from './qrPayload'
+import { buildIncidentReportInviteUrl } from './incidentReportPayload'
 
 export async function createParticipant(input: {
   identifyingDetails: string
@@ -509,4 +510,94 @@ export async function importScreenerResponse(input: {
 
     return { status: 'ok' as const, screenerId, behaviourId: invite.behaviourId }
   })
+}
+
+// Phase 1.3 — incident/ABC reporting over the same two-QR mechanism (brief
+// Part B, step 11). Decision: the invite QR carries only a token + role
+// (never a behaviour's checklist options — see incidentReportPayload.ts for
+// why), so the /report page offers the generic starter lists plus free
+// text, and the resulting episode is imported with antecedentTag 'unknown'
+// / consequenceTag 'none_observed' — the practitioner reconciles/re-tags on
+// review, same as the brief's option (b).
+
+export async function createIncidentInvite(input: { behaviourId: string; informantRole: string }) {
+  const id = newId()
+  const token = generateToken()
+  await db.incidentInvites.add({
+    id,
+    behaviourId: input.behaviourId,
+    token,
+    informantRole: input.informantRole,
+    createdAt: new Date().toISOString(),
+    status: 'pending',
+  })
+  return { id, token, url: buildIncidentReportInviteUrl(token, input.informantRole) }
+}
+
+export async function cancelIncidentInvite(inviteId: string) {
+  const invite = await db.incidentInvites.get(inviteId)
+  if (!invite) throw new Error('Invite not found')
+  if (invite.status !== 'pending') throw new Error('Only pending invites can be cancelled')
+  await db.incidentInvites.update(inviteId, { status: 'cancelled' })
+}
+
+export type ImportIncidentReportOutcome =
+  | { status: 'ok'; episodeId: string; behaviourId: string }
+  | { status: 'not_found' }
+  | { status: 'already_used' }
+  | { status: 'cancelled' }
+
+export async function importIncidentReport(input: {
+  token: string
+  dateTime: string
+  durationMinutes: number | null
+  severityRating: 0 | 1 | 2 | 3
+  settingEvent: string
+  antecedentText: string
+  consequenceText: string
+  riskFlags: RiskFlagItem[]
+}): Promise<ImportIncidentReportOutcome> {
+  const outcome = await db.transaction(
+    'rw',
+    [db.incidentInvites, db.episodes, db.riskFlags],
+    async () => {
+      const invite = await db.incidentInvites.where('token').equals(input.token).first()
+      if (!invite) return { status: 'not_found' as const }
+      if (invite.status === 'completed') return { status: 'already_used' as const }
+      if (invite.status === 'cancelled') return { status: 'cancelled' as const }
+
+      const episodeId = newId()
+      await db.episodes.add({
+        id: episodeId,
+        behaviourId: invite.behaviourId,
+        dateTime: input.dateTime,
+        durationMinutes: input.durationMinutes,
+        severityRating: input.severityRating,
+        // Frequency/context is a practitioner interpretive rating across
+        // time, not something an informant reporting one incident is
+        // positioned to answer — left at its neutral default.
+        frequencyContext: 0,
+        settingEvent: input.settingEvent.trim(),
+        antecedentText: input.antecedentText.trim(),
+        antecedentTag: 'unknown',
+        consequenceText: input.consequenceText.trim(),
+        consequenceTag: 'none_observed',
+        loggedBy: `${invite.informantRole} (via QR handoff)`,
+        riskFlags: input.riskFlags,
+        createdAt: new Date().toISOString(),
+      })
+      await db.incidentInvites.update(invite.id, { status: 'completed' })
+
+      return { status: 'ok' as const, episodeId, behaviourId: invite.behaviourId }
+    },
+  )
+
+  if (outcome.status === 'ok') {
+    const episodesAsc = await db.episodes.where('behaviourId').equals(outcome.behaviourId).sortBy('dateTime')
+    for (const candidate of checkEpisodeTriggers(episodesAsc)) {
+      await raiseFlagIfNotOpen(outcome.behaviourId, candidate)
+    }
+  }
+
+  return outcome
 }
