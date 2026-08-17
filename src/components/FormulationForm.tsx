@@ -8,6 +8,7 @@ import {
   emptyEscalationCycle,
 } from '../lib/escalationContent'
 import type { EscalationCycle, EscalationPhase } from '../lib/types'
+import { Tooltip } from './Tooltip'
 
 const emptyPrompts = { recentExample: '', intenseEpisode: '', antecedentAndResponse: '' }
 const emptyRiskScenarios = { highRisk: '', lowRisk: '' }
@@ -189,7 +190,7 @@ export function FormulationForm({ behaviourId }: { behaviourId: string }) {
 
       <div>
         <span className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
-          Escalation cycle
+          <Tooltip term="behaviour">Escalation cycle</Tooltip>
         </span>
         <div className="space-y-3">
           {ESCALATION_PHASES.map((phase) => (

@@ -9,6 +9,7 @@ import {
   SEVERITY_SCALE,
 } from '../lib/scales'
 import type { AntecedentTag, ConsequenceTag, RiskFlagItem } from '../lib/types'
+import { Tooltip } from './Tooltip'
 
 function nowLocal(): string {
   const d = new Date()
@@ -97,7 +98,7 @@ export function EpisodeForm({ behaviourId }: { behaviourId: string }) {
       </div>
 
       <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-        Setting event
+        <Tooltip term="setting event">Setting event</Tooltip>
         <input
           value={settingEvent}
           onChange={(e) => setSettingEvent(e.target.value)}
@@ -109,7 +110,7 @@ export function EpisodeForm({ behaviourId }: { behaviourId: string }) {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-            Antecedent
+            <Tooltip term="antecedent">Antecedent</Tooltip>
             <textarea
               required
               value={antecedentText}
@@ -133,7 +134,7 @@ export function EpisodeForm({ behaviourId }: { behaviourId: string }) {
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-            Consequence
+            <Tooltip term="consequence">Consequence</Tooltip>
             <textarea
               required
               value={consequenceText}

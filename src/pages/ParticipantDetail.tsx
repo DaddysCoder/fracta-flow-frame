@@ -5,6 +5,7 @@ import { db } from '../lib/db'
 import { createBehaviour } from '../lib/actions'
 import { usePractitioner } from '../lib/practitioner'
 import { ExportPanel } from '../components/ExportPanel'
+import { BEHAVIOUR_CATEGORIES } from '../lib/fbaContent'
 
 type Section = 'behaviours' | 'documentation'
 
@@ -81,6 +82,30 @@ export function ParticipantDetail() {
 
           {showForm && (
             <form onSubmit={handleSubmit} className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">
+              <div>
+                <span className="block text-xs font-medium text-slate-500 mb-1">
+                  Behaviours of concern — pick a starting point or write your own below
+                </span>
+                <div className="space-y-2">
+                  {BEHAVIOUR_CATEGORIES.map((category) => (
+                    <div key={category.id}>
+                      <p className="text-[11px] uppercase tracking-wide text-slate-400 mb-1">{category.label}</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {category.items.map((item) => (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => setName(item.label)}
+                            className="rounded-md border border-slate-300 dark:border-slate-700 px-2 py-1 text-xs text-slate-600 dark:text-slate-300 hover:border-[#111111] dark:hover:border-white"
+                          >
+                            {item.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                 Behaviour name
                 <input
@@ -88,7 +113,7 @@ export function ParticipantDetail() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="mt-1 block w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm"
-                  placeholder="e.g. Property damage during transitions"
+                  placeholder="e.g. Property damage during transitions, or Other — describe your own"
                 />
               </label>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
