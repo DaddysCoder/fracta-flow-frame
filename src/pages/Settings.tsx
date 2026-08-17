@@ -1,6 +1,14 @@
 import { type FormEvent, useEffect, useState } from 'react'
 import { usePractitioner, saveProfile } from '../lib/practitioner'
 import { exportAllData, getLastBackupAt, importData } from '../lib/backup'
+import { renderBlankAbcForm, renderBlankFormulationForm } from '../lib/printableForms'
+
+function openPrintable(html: string) {
+  const blob = new Blob([html], { type: 'text/html' })
+  const url = URL.createObjectURL(blob)
+  window.open(url, '_blank', 'noopener,noreferrer')
+  setTimeout(() => URL.revokeObjectURL(url), 60_000)
+}
 
 export function Settings() {
   const practitioner = usePractitioner()
@@ -94,6 +102,29 @@ export function Settings() {
         </div>
         {importOk && <p className="text-sm text-green-600">Backup imported.</p>}
         {importError && <p className="text-sm text-red-600">{importError}</p>}
+      </section>
+
+      <section className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">
+        <h2 className="text-sm font-semibold text-[#111111] dark:text-white">Paper forms</h2>
+        <p className="text-sm text-slate-500">
+          Blank, printable versions of the formulation interview and the ABC/episode log — same
+          options as the on-screen forms. For use away from a device; transcribe answers back in
+          afterward.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={() => openPrintable(renderBlankFormulationForm())}
+            className="rounded-md border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-200"
+          >
+            Print blank formulation form
+          </button>
+          <button
+            onClick={() => openPrintable(renderBlankAbcForm())}
+            className="rounded-md border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-200"
+          >
+            Print blank ABC form
+          </button>
+        </div>
       </section>
     </div>
   )
