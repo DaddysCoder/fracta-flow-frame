@@ -1,5 +1,8 @@
 // Data model — Phase 1 MVP + Phase 2 triangulation + Phase 3 escalation/documentation (brief §5).
 
+import type { PlanCycle } from '@fracta/contract'
+export type { PlanCycle }
+
 export type AntecedentTag = 'demand' | 'transition' | 'sensory' | 'social' | 'unknown'
 export type ConsequenceTag = 'attention' | 'escape' | 'tangible' | 'automatic' | 'none_observed'
 export type RiskFlagItem = 'injury' | 'property_damage' | 'elopement' | 'self_injury' | 'other'
@@ -26,6 +29,11 @@ export interface Participant {
   // generates one (contract A1). null for a Frame-only participant, which
   // cannot emit an FbaOutcomeBundle as a result (fails closed).
   linkId: string | null
+  // The rest of this block is populated only via a ParticipantContext
+  // import (brief Part B, step 9) — null/empty for a Frame-only
+  // participant.
+  planCycle: PlanCycle | null
+  knownBehaviourLabels: string[] // offered as suggestions on "Add behaviour" — never auto-created
 }
 
 export interface Behaviour {

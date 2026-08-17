@@ -1,16 +1,33 @@
-import { type FormEvent, useState } from 'react'
+import { type ChangeEvent, type FormEvent, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { db } from '../lib/db'
-import { createParticipant } from '../lib/actions'
+import { createParticipant, importParticipantContext } from '../lib/actions'
 import { usePractitioner } from '../lib/practitioner'
 
 export function Participants() {
   const participants = useLiveQuery(() => db.participants.orderBy('createdAt').reverse().toArray(), [])
   const practitioner = usePractitioner()
+  const navigate = useNavigate()
   const [identifyingDetails, setIdentifyingDetails] = useState('')
   const [consent, setConsent] = useState(false)
   const [showForm, setShowForm] = useState(false)
+  const [importError, setImportError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  async function handleImportFile(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file || !practitioner) return
+    setImportError(null)
+    const text = await file.text()
+    const outcome = await importParticipantContext(text, practitioner.name)
+    if (outcome.status === 'error') {
+      setImportError(outcome.reason)
+      return
+    }
+    navigate(`/participants/${outcome.participantId}`)
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -29,13 +46,31 @@ export function Participants() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-display font-bold text-[#111111] dark:text-white">Participants</h1>
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className="rounded-md bg-[#111111] dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-sm font-medium"
-        >
-          {showForm ? 'Cancel' : 'Add participant'}
-        </button>
+        <div className="flex gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/json"
+            className="hidden"
+            onChange={handleImportFile}
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={!practitioner}
+            className="rounded-md border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-200 disabled:opacity-50"
+          >
+            Import from Vector
+          </button>
+          <button
+            onClick={() => setShowForm((v) => !v)}
+            className="rounded-md bg-[#111111] dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-sm font-medium"
+          >
+            {showForm ? 'Cancel' : 'Add participant'}
+          </button>
+        </div>
       </div>
+
+      {importError && <p className="text-sm text-red-600">{importError}</p>}
 
       {showForm && (
         <form onSubmit={handleSubmit} className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">

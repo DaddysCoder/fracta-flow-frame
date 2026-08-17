@@ -1,4 +1,4 @@
-import { findDenylistedKeys, validateFbaOutcomeBundle } from '@fracta/contract'
+import { findDenylistedKeys, validateFbaOutcomeBundle, validateParticipantContext, type ParticipantContext } from '@fracta/contract'
 import { db, newId } from './db'
 import { assembleFbaOutcomeBundle } from './fbaOutcomeBundle'
 import type {
@@ -31,18 +31,76 @@ export async function createParticipant(input: {
     consentAttestedBy: input.consentAttested ? input.practitionerName : null,
     createdAt: new Date().toISOString(),
     linkId: null,
+    planCycle: null,
+    knownBehaviourLabels: [],
   })
   return id
 }
 
-// Manual linkId entry — a stopgap until the full ParticipantContext import
-// exists. Vector still mints the value; this only lets a practitioner
-// record one by hand so bundle export (brief Part B, step 8) can be
-// exercised end-to-end before step 9 ships.
+// Manual linkId entry — a fallback for correcting/entering a linkId by hand
+// alongside the real import below.
 export async function setParticipantLinkId(participantId: string, linkId: string | null) {
   const participant = await db.participants.get(participantId)
   if (!participant) throw new Error('Participant not found')
   await db.participants.update(participantId, { linkId: linkId?.trim() || null })
+}
+
+export type ImportParticipantContextOutcome =
+  | { status: 'ok'; participantId: string; wasUpdate: boolean }
+  | { status: 'error'; reason: string }
+
+// Consumes a ParticipantContext file exported by Vector (brief Part B, step
+// 9). Validated against the contract before anything is written. A linkId
+// already present locally updates that participant in place (plan cycle,
+// consent, suggested behaviour labels refresh); a new linkId creates a new
+// Frame participant. knownBehaviourLabels are stored for the "Add
+// behaviour" screen to offer as suggestions — never auto-created here.
+export async function importParticipantContext(
+  json: string,
+  practitionerName: string,
+): Promise<ImportParticipantContextOutcome> {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(json)
+  } catch {
+    return { status: 'error', reason: 'This file is not valid JSON.' }
+  }
+
+  const validation = validateParticipantContext(parsed)
+  if (!validation.ok) {
+    return { status: 'error', reason: `Not a valid ParticipantContext: ${validation.errors.join(' ')}` }
+  }
+  const context = parsed as ParticipantContext
+
+  const existing = (await db.participants.toArray()).find((p) => p.linkId === context.linkId)
+
+  if (existing) {
+    await db.participants.update(existing.id, {
+      planCycle: context.planCycle,
+      knownBehaviourLabels: context.knownBehaviourLabels,
+      consentAttested: context.consentAttested,
+      consentAttestedAt: context.consentAttestedAt,
+      consentAttestedBy: context.consentAttested ? practitionerName : existing.consentAttestedBy,
+    })
+    return { status: 'ok', participantId: existing.id, wasUpdate: true }
+  }
+
+  const id = newId()
+  await db.participants.add({
+    id,
+    // displayLabel (initials/alias), never full identifying details — this
+    // is exactly what crossed the boundary, so it's exactly what's shown
+    // locally too (contract A1/A2).
+    identifyingDetails: context.displayLabel,
+    consentAttested: context.consentAttested,
+    consentAttestedAt: context.consentAttestedAt,
+    consentAttestedBy: context.consentAttested ? practitionerName : null,
+    createdAt: new Date().toISOString(),
+    linkId: context.linkId,
+    planCycle: context.planCycle,
+    knownBehaviourLabels: context.knownBehaviourLabels,
+  })
+  return { status: 'ok', participantId: id, wasUpdate: false }
 }
 
 export async function createBehaviour(input: {

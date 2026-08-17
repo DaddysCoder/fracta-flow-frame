@@ -14,6 +14,8 @@ function participant(overrides: Partial<Participant> = {}): Participant {
     consentAttestedBy: 'Jo',
     createdAt: '2026-01-01T00:00:00.000Z',
     linkId: 'link-abc-123',
+    planCycle: null,
+    knownBehaviourLabels: [],
     ...overrides,
   }
 }

@@ -48,6 +48,18 @@ export function ParticipantDetail() {
         <h1 className="text-xl font-display font-bold text-[#111111] dark:text-white mt-1">
           {participant.identifyingDetails}
         </h1>
+        {participant.linkId && (
+          <p className="text-xs text-slate-500 mt-1">
+            Linked to Vector ({participant.linkId})
+            {participant.planCycle?.expiresAt && (
+              <>
+                {' '}
+                · this FBA sits inside a {participant.planCycle.planType ?? ''} plan cycle expiring{' '}
+                {new Date(participant.planCycle.expiresAt).toLocaleDateString()}
+              </>
+            )}
+          </p>
+        )}
       </div>
 
       <div className="flex gap-1 border-b border-slate-200 dark:border-slate-800">
@@ -82,6 +94,25 @@ export function ParticipantDetail() {
 
           {showForm && (
             <form onSubmit={handleSubmit} className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">
+              {participant.knownBehaviourLabels.length > 0 && (
+                <div>
+                  <span className="block text-xs font-medium text-slate-500 mb-1">
+                    From Vector's intake triage — pick one to start from, or ignore
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {participant.knownBehaviourLabels.map((label) => (
+                      <button
+                        key={label}
+                        type="button"
+                        onClick={() => setName(label)}
+                        className="rounded-md border border-slate-300 dark:border-slate-700 px-2 py-1 text-xs text-slate-600 dark:text-slate-300 hover:border-[#111111] dark:hover:border-white"
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div>
                 <span className="block text-xs font-medium text-slate-500 mb-1">
                   Behaviours of concern — pick a starting point or write your own below
