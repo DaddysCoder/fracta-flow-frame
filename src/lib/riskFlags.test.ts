@@ -42,6 +42,7 @@ function makeHypothesis(overrides: Partial<FunctionHypothesis> = {}): FunctionHy
     screenerDisagreement: false,
     contributingEpisodeIds: [],
     contributingScreenerIds: [],
+    practitionerConfidence: null,
     ...overrides,
   }
 }

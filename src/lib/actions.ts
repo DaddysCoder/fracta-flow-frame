@@ -168,6 +168,9 @@ export async function recomputeHypothesis(behaviourId: string): Promise<ComputeO
       behaviourId,
       computedAt: new Date().toISOString(),
       ...outcome.result,
+      // Practitioner confidence is a separate, subsequent annotation (step
+      // 7) — never derived from the computation above.
+      practitionerConfidence: null,
     })
 
     const hypothesesAsc = await db.hypotheses.where('behaviourId').equals(behaviourId).sortBy('computedAt')
@@ -176,6 +179,20 @@ export async function recomputeHypothesis(behaviourId: string): Promise<ComputeO
     }
   }
   return outcome
+}
+
+// Practitioner's own subjective confidence rating, attached to an already-
+// computed hypothesis (brief Part B, step 7). Deliberately a separate
+// update path from recomputeHypothesis: it annotates a clinical judgement
+// onto an immutable computed record, never re-derives or overwrites the
+// computed fields.
+export async function setPractitionerConfidence(
+  hypothesisId: string,
+  rating: 1 | 2 | 3 | 4 | 5 | 6 | null,
+) {
+  const hypothesis = await db.hypotheses.get(hypothesisId)
+  if (!hypothesis) throw new Error('Hypothesis not found')
+  await db.hypotheses.update(hypothesisId, { practitionerConfidence: rating })
 }
 
 // Skips raising a new flag if one of the same triggerType is already open for

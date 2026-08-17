@@ -97,6 +97,13 @@ export interface FunctionHypothesis {
   // Audit trail — required, not optional. Every hypothesis must show its receipts.
   contributingEpisodeIds: string[]
   contributingScreenerIds: string[]
+
+  // Phase 1.3 — practitioner's own subjective confidence (brief Part B,
+  // step 7), on the QLD guide's 1-6 "not sure" -> "100% sure" convention.
+  // Set separately from computation via setPractitionerConfidence, never
+  // computed and never merged/averaged into confidenceLevel — see
+  // hypothesis.test.ts, which asserts hypothesis.ts never references it.
+  practitionerConfidence: 1 | 2 | 3 | 4 | 5 | 6 | null
 }
 
 // Phase 3 — escalation & documentation (brief §2).

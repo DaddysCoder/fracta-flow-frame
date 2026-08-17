@@ -68,7 +68,8 @@ function hypothesisSummary(h: FunctionHypothesis | null): string {
   return `
     <table class="kv">
       <tr><th>Agreement status</th><td>${escapeHtml(h.agreementStatus.replace('_', ' '))}</td></tr>
-      <tr><th>Confidence level</th><td>${escapeHtml(h.confidenceLevel)}</td></tr>
+      <tr><th>Confidence level (computed)</th><td>${escapeHtml(h.confidenceLevel)}</td></tr>
+      <tr><th>Practitioner's own confidence</th><td>${h.practitionerConfidence !== null ? `${h.practitionerConfidence}/6 (1 = not sure, 6 = 100% sure) — a separate, subjective rating, not merged into the computed tier above` : 'Not rated'}</td></tr>
       <tr><th>Screener top domain(s)</th><td>${escapeHtml(screenerDomains)}</td></tr>
       <tr><th>Dominant episode pattern</th><td>${escapeHtml(episodePattern)}</td></tr>
       <tr><th>Episodes considered</th><td>${h.episodeCount} across ${h.distinctDayCount} distinct day(s)</td></tr>

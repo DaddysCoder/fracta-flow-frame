@@ -36,6 +36,7 @@ function hypothesis(overrides: Partial<FunctionHypothesis> = {}): FunctionHypoth
     screenerDisagreement: false,
     contributingEpisodeIds: [],
     contributingScreenerIds: [],
+    practitionerConfidence: null,
     ...overrides,
   }
 }

@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../lib/db'
-import { recomputeHypothesis } from '../lib/actions'
+import { recomputeHypothesis, setPractitionerConfidence } from '../lib/actions'
 import { DOMAIN_LABELS } from '../lib/screener'
 import type { AgreementStatus, ConfidenceLevel } from '../lib/types'
+
+const PRACTITIONER_CONFIDENCE_SCALE = [1, 2, 3, 4, 5, 6] as const
 
 const AGREEMENT_LABEL: Record<AgreementStatus, string> = {
   match: 'Match',
@@ -101,7 +103,7 @@ export function HypothesisPanel({ behaviourId }: { behaviourId: string }) {
               {AGREEMENT_LABEL[latest.agreementStatus]}
             </span>
             <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-1 text-sm font-medium text-slate-700 dark:text-slate-300">
-              {CONFIDENCE_LABEL[latest.confidenceLevel]}
+              {CONFIDENCE_LABEL[latest.confidenceLevel]} <span className="font-normal text-xs">(computed)</span>
             </span>
             {latest.screenerDisagreement && (
               <span className="rounded-full bg-purple-100 dark:bg-purple-950 text-purple-900 dark:text-purple-200 px-3 py-1 text-sm font-medium">
@@ -134,6 +136,46 @@ export function HypothesisPanel({ behaviourId }: { behaviourId: string }) {
               <dd className="text-[#111111] dark:text-white">{latest.distinctDayCount}</dd>
             </div>
           </dl>
+
+          <div>
+            <span className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+              Your own confidence in this hypothesis{' '}
+              <span className="font-normal text-xs text-slate-400">
+                (a separate, subjective rating — never merged into the computed tier above)
+              </span>
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {PRACTITIONER_CONFIDENCE_SCALE.map((n) => (
+                <label
+                  key={n}
+                  className={`cursor-pointer rounded-md border px-2 py-1.5 text-xs ${
+                    latest.practitionerConfidence === n
+                      ? 'border-[#111111] dark:border-white bg-[#111111] dark:bg-white text-white dark:text-slate-900'
+                      : 'border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="practitionerConfidence"
+                    className="sr-only"
+                    checked={latest.practitionerConfidence === n}
+                    onChange={() => setPractitionerConfidence(latest.id, n)}
+                  />
+                  {n}
+                </label>
+              ))}
+              {latest.practitionerConfidence !== null && (
+                <button
+                  type="button"
+                  onClick={() => setPractitionerConfidence(latest.id, null)}
+                  className="text-xs text-slate-400 underline"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            <p className="text-xs text-slate-400 mt-1">1 = not sure, 6 = 100% sure (QLD guide convention).</p>
+          </div>
 
           {showNudge && (
             <div className="rounded-md border border-blue-300 bg-blue-50 dark:bg-blue-950 dark:border-blue-700 p-3 text-sm text-blue-900 dark:text-blue-200">

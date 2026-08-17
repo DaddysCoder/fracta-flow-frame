@@ -103,6 +103,7 @@ describe('backup table coverage', () => {
       screenerDisagreement: false,
       contributingEpisodeIds: [],
       contributingScreenerIds: [],
+      practitionerConfidence: null,
     })
     await db.riskFlags.add({
       id: newId(),
