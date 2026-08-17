@@ -5,11 +5,12 @@ import type {
   DocumentationFormat,
   RiskFlagItem,
   ScreenerResponse,
+  StrategyLookup,
 } from './types'
 import { scoreDomains } from './screener'
 import { computeHypothesis, type ComputeOutcome } from './hypothesis'
 import { checkEpisodeTriggers, checkHypothesisTriggers, type FlagCandidate } from './riskFlags'
-import { renderDocumentationExport } from './documentExport'
+import { renderDocumentationExport, resolveStrategyLookupDomain } from './documentExport'
 import { buildInviteUrl, generateToken } from './qrPayload'
 
 export async function createParticipant(input: {
@@ -192,6 +193,12 @@ export async function generateDocumentationExport(input: {
   behaviourIds: string[]
   format: DocumentationFormat
   generatedBy: string
+  // Optional strategy-library plug-in point (see types.ts StrategyLookup /
+  // MatchedStrategy). Only consulted for staff_training_summary, and only
+  // when a caller actually supplies one — there is no default
+  // implementation, so omitting it reproduces today's stub behaviour
+  // exactly.
+  strategyLookup?: StrategyLookup
 }) {
   const participant = await db.participants.get(input.participantId)
   if (!participant) throw new Error('Participant not found')
@@ -208,12 +215,21 @@ export async function generateDocumentationExport(input: {
         db.hypotheses.where('behaviourId').equals(behaviour.id).sortBy('computedAt'),
         db.riskFlags.where('behaviourId').equals(behaviour.id).sortBy('triggeredAt'),
       ])
+      const latestHypothesis = hypotheses.length ? hypotheses[hypotheses.length - 1] : null
+
+      let matchedStrategies
+      if (input.format === 'staff_training_summary' && input.strategyLookup) {
+        const domain = resolveStrategyLookupDomain(latestHypothesis)
+        if (domain) matchedStrategies = await input.strategyLookup(domain)
+      }
+
       return {
         behaviour,
         episodes,
         screeners,
-        latestHypothesis: hypotheses.length ? hypotheses[hypotheses.length - 1] : null,
+        latestHypothesis,
         flags,
+        matchedStrategies,
       }
     }),
   )

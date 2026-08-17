@@ -4,8 +4,10 @@ import type {
   Behaviour,
   DocumentationFormat,
   Episode,
+  FunctionDomain,
   FunctionHypothesis,
   FunctionScreener,
+  MatchedStrategy,
   Participant,
   RiskFlag,
 } from './types'
@@ -21,6 +23,24 @@ export interface BehaviourExportData {
   screeners: FunctionScreener[]
   latestHypothesis: FunctionHypothesis | null
   flags: RiskFlag[]
+  // Populated by the caller via a StrategyLookup (see types.ts) when a
+  // strategy library is wired up; undefined/empty renders the existing
+  // stub note unchanged. This module never fetches or matches strategies
+  // itself — it only renders whatever the caller already resolved.
+  matchedStrategies?: MatchedStrategy[]
+}
+
+// Picks the single domain a strategy lookup would be called with, when the
+// caller doesn't have a more specific resolution strategy of its own. Not
+// itself strategy-matching logic — it only decides which domain to *ask*
+// about. Prefers the observed episode pattern (grounded in logged data)
+// over the screener's hypothesised domain(s), and returns null rather than
+// guessing when neither is available or the screener result is tied.
+export function resolveStrategyLookupDomain(hypothesis: FunctionHypothesis | null): FunctionDomain | null {
+  if (!hypothesis) return null
+  if (hypothesis.episodePatternResult) return hypothesis.episodePatternResult
+  if (hypothesis.screenerFunctionResult.length === 1) return hypothesis.screenerFunctionResult[0]
+  return null
 }
 
 export interface RenderInput {
@@ -188,6 +208,36 @@ function renderPlanAppendix(b: BehaviourExportData): string {
   `
 }
 
+function matchedStrategiesSection(strategies: MatchedStrategy[] | undefined): string {
+  if (!strategies || strategies.length === 0) {
+    return `
+      <p class="stub-note">
+        <em>This is a basic summary. Matched support strategies are not included here — that
+        depends on separate strategy-library work that does not yet exist.</em>
+      </p>
+    `
+  }
+  const ranked = [...strategies].sort((a, b) => a.rank - b.rank)
+  return `
+    <h3>Matched support strategies</h3>
+    <table class="kv">
+      <thead><tr><th>Strategy</th><th>Why it fits</th><th>Evidence</th></tr></thead>
+      <tbody>
+        ${ranked
+          .map(
+            (s) => `
+          <tr>
+            <td><strong>${escapeHtml(s.name)}</strong><br />${escapeHtml(s.summary)}</td>
+            <td>${escapeHtml(s.rationale)}</td>
+            <td>${escapeHtml(s.evidenceRef)}</td>
+          </tr>`,
+          )
+          .join('')}
+      </tbody>
+    </table>
+  `
+}
+
 function renderStaffTrainingSummary(b: BehaviourExportData): string {
   const openFlags = b.flags.filter((f) => f.status === 'open' || f.status === 'acknowledged')
   return `
@@ -205,10 +255,7 @@ function renderStaffTrainingSummary(b: BehaviourExportData): string {
         }
         ${openFlags.length ? ` — ${openFlags.length} open flag(s) practitioners should be aware of.` : ''}
       </p>
-      <p class="stub-note">
-        <em>This is a basic summary. Matched support strategies are not included here — that
-        depends on separate strategy-library work that does not yet exist.</em>
-      </p>
+      ${matchedStrategiesSection(b.matchedStrategies)}
     </section>
   `
 }

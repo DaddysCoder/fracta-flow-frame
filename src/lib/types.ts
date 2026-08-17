@@ -135,6 +135,28 @@ export interface DocumentationExport {
 
 // Phase 4 — multi-informant handoff, QR only (brief §3).
 
+// Strategy-library integration seam (brief §7, phase-3-escalation-docs.md).
+// No strategy content or matching logic lives in this repo — this is only
+// the contract a future strategy-library lookup must satisfy so it can plug
+// into staff_training_summary exports without further changes here.
+
+export interface MatchedStrategy {
+  id: string
+  name: string
+  summary: string // short, practitioner-facing description of the strategy itself
+  rationale: string // why this strategy fits the given function domain
+  evidenceRef: string // citation/source backing the strategy, not full instrument content
+  rank: number // 1-based; lower is more strongly recommended
+}
+
+// Function domain in, ranked evidence-based strategies out. Which domain to
+// look up (when screener and episode data disagree) is a caller decision —
+// see resolveStrategyLookupDomain in documentExport.ts for the placeholder
+// this repo uses until the real library defines its own resolution needs.
+export type StrategyLookup = (
+  functionDomain: FunctionDomain,
+) => Promise<MatchedStrategy[]> | MatchedStrategy[]
+
 export type ScreenerInviteStatus = 'pending' | 'completed' | 'cancelled'
 
 export interface ScreenerInvite {
