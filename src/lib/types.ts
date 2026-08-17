@@ -145,3 +145,51 @@ export interface ScreenerInvite {
   createdAt: string // ISO string, not Date — consistent with the rest of this data model
   status: ScreenerInviteStatus
 }
+
+// Phase 1.2 — formulation becomes a collection, escalation cycle (brief Part B, steps 2-3).
+// Matches @fracta/contract's EscalationPhase values exactly, since the
+// resolved display text for these phases is what crosses into
+// FbaOutcome.escalationCycle (contract A3).
+export type EscalationPhase =
+  | 'baseline'
+  | 'early_warning'
+  | 'escalation'
+  | 'peak'
+  | 'de_escalation'
+  | 'recovery'
+
+export interface EscalationPhaseEntry {
+  checkedItems: string[] // stable IDs into ESCALATION_CONTENT, not display text
+  customItems: string[] // free text, practitioner-entered
+}
+
+export type EscalationCycle = Record<EscalationPhase, EscalationPhaseEntry>
+
+export interface FormulationDescriptionPrompts {
+  recentExample: string
+  intenseEpisode: string
+  antecedentAndResponse: string
+}
+
+export interface FormulationRiskScenarios {
+  highRisk: string
+  lowRisk: string
+}
+
+export interface Formulation {
+  id: string
+  behaviourId: string
+  informantName: string // who was interviewed
+  informantRole: string
+  conductedBy: string // practitioner
+  conductedAt: string // ISO string, not Date — consistent with the rest of this data model
+
+  descriptionPrompts: FormulationDescriptionPrompts
+  onset: string
+  // Interview-stage impression only. Referenced nowhere in the Phase 2
+  // confidence calculation (hypothesis.ts), which relies solely on actual
+  // logged episodes — see formulation.test.ts.
+  frequencyImpression: string
+  riskScenarios: FormulationRiskScenarios
+  escalationCycle: EscalationCycle
+}

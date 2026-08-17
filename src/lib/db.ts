@@ -3,6 +3,7 @@ import type {
   Behaviour,
   DocumentationExport,
   Episode,
+  Formulation,
   FunctionHypothesis,
   FunctionScreener,
   Participant,
@@ -21,6 +22,7 @@ class FbaDatabase extends Dexie {
   riskFlags!: EntityTable<RiskFlag, 'id'>
   documentationExports!: EntityTable<DocumentationExport, 'id'>
   screenerInvites!: EntityTable<ScreenerInvite, 'id'>
+  formulations!: EntityTable<Formulation, 'id'>
 
   constructor() {
     super('fba-screener')
@@ -40,6 +42,9 @@ class FbaDatabase extends Dexie {
     })
     this.version(4).stores({
       screenerInvites: 'id, behaviourId, token, status, createdAt',
+    })
+    this.version(5).stores({
+      formulations: 'id, behaviourId, conductedAt',
     })
   }
 }

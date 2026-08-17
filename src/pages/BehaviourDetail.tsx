@@ -9,10 +9,13 @@ import { ScreenerList } from '../components/ScreenerList'
 import { HypothesisPanel } from '../components/HypothesisPanel'
 import { FlagsPanel } from '../components/FlagsPanel'
 import { HandoffPanel } from '../components/HandoffPanel'
+import { FormulationForm } from '../components/FormulationForm'
+import { FormulationList } from '../components/FormulationList'
 
-type Tab = 'episodes' | 'screener' | 'triangulation' | 'flags' | 'handoff'
+type Tab = 'formulation' | 'episodes' | 'screener' | 'triangulation' | 'flags' | 'handoff'
 
 const TAB_LABEL: Record<Tab, string> = {
+  formulation: 'Formulation',
   episodes: 'Episode log',
   screener: 'Function screener',
   triangulation: 'Triangulation',
@@ -27,7 +30,7 @@ export function BehaviourDetail() {
     () => (behaviour ? db.participants.get(behaviour.participantId) : undefined),
     [behaviour],
   )
-  const [tab, setTab] = useState<Tab>('episodes')
+  const [tab, setTab] = useState<Tab>('formulation')
 
   if (!behaviour) return <p className="text-sm text-slate-500">Loading…</p>
 
@@ -44,7 +47,7 @@ export function BehaviourDetail() {
       </div>
 
       <div className="flex gap-1 border-b border-slate-200 dark:border-slate-800">
-        {(['episodes', 'screener', 'triangulation', 'flags', 'handoff'] as Tab[]).map((t) => (
+        {(['formulation', 'episodes', 'screener', 'triangulation', 'flags', 'handoff'] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -58,6 +61,13 @@ export function BehaviourDetail() {
           </button>
         ))}
       </div>
+
+      {tab === 'formulation' && (
+        <div className="space-y-6">
+          <FormulationForm behaviourId={behaviourId} />
+          <FormulationList behaviourId={behaviourId} />
+        </div>
+      )}
 
       {tab === 'episodes' && (
         <div className="space-y-6">

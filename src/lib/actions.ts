@@ -3,6 +3,9 @@ import type {
   AntecedentTag,
   ConsequenceTag,
   DocumentationFormat,
+  EscalationCycle,
+  FormulationDescriptionPrompts,
+  FormulationRiskScenarios,
   RiskFlagItem,
   ScreenerResponse,
 } from './types'
@@ -86,6 +89,39 @@ export async function createEpisode(input: {
     await raiseFlagIfNotOpen(input.behaviourId, candidate)
   }
 
+  return id
+}
+
+// Formulation is a collection, not a single overwritable section (brief
+// Part B, step 2) — every call adds a new dated record. Editing an existing
+// formulation still goes through this same shape via db.formulations.put
+// from the caller if ever needed, but there is no update path here: the
+// UI never silently overwrites a past interview.
+export async function createFormulation(input: {
+  behaviourId: string
+  informantName: string
+  informantRole: string
+  conductedBy: string
+  descriptionPrompts: FormulationDescriptionPrompts
+  onset: string
+  frequencyImpression: string
+  riskScenarios: FormulationRiskScenarios
+  escalationCycle: EscalationCycle
+}) {
+  const id = newId()
+  await db.formulations.add({
+    id,
+    behaviourId: input.behaviourId,
+    informantName: input.informantName.trim(),
+    informantRole: input.informantRole.trim(),
+    conductedBy: input.conductedBy,
+    conductedAt: new Date().toISOString(),
+    descriptionPrompts: input.descriptionPrompts,
+    onset: input.onset.trim(),
+    frequencyImpression: input.frequencyImpression.trim(),
+    riskScenarios: input.riskScenarios,
+    escalationCycle: input.escalationCycle,
+  })
   return id
 }
 
