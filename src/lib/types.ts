@@ -22,6 +22,10 @@ export interface Participant {
   consentAttestedAt: string | null
   consentAttestedBy: string | null // practitioner name/id, not vendor-verified
   createdAt: string
+  // Opaque link into Vector, minted by Vector and stored here — Frame never
+  // generates one (contract A1). null for a Frame-only participant, which
+  // cannot emit an FbaOutcomeBundle as a result (fails closed).
+  linkId: string | null
 }
 
 export interface Behaviour {
@@ -128,7 +132,15 @@ export interface RiskFlag {
   resolutionNote: string | null
 }
 
-export type DocumentationFormat = 'clinical_report' | 'plan_appendix' | 'staff_training_summary'
+export type DocumentationFormat =
+  | 'clinical_report'
+  | 'plan_appendix'
+  | 'staff_training_summary'
+  // Phase 1.3 — the JSON payload for Vector's Form 07 (brief Part B, step
+  // 8). Reuses the same immutable-snapshot storage mechanism as the HTML
+  // formats above; contentSnapshot holds JSON.stringify(FbaOutcomeBundle)
+  // instead of rendered HTML.
+  | 'fba_outcome_bundle'
 
 export interface DocumentationExport {
   id: string

@@ -1,9 +1,10 @@
+import { findDenylistedKeys, validateFbaOutcomeBundle } from '@fracta/contract'
 import { db, newId } from './db'
+import { assembleFbaOutcomeBundle } from './fbaOutcomeBundle'
 import type {
   AntecedentTag,
   ChecklistEntry,
   ConsequenceTag,
-  DocumentationFormat,
   EscalationCycle,
   FormulationDescriptionPrompts,
   FormulationRiskScenarios,
@@ -13,7 +14,7 @@ import type {
 import { scoreDomains } from './screener'
 import { computeHypothesis, type ComputeOutcome } from './hypothesis'
 import { checkEpisodeTriggers, checkHypothesisTriggers, type FlagCandidate } from './riskFlags'
-import { renderDocumentationExport } from './documentExport'
+import { renderDocumentationExport, type HtmlDocumentationFormat } from './documentExport'
 import { buildInviteUrl, generateToken } from './qrPayload'
 
 export async function createParticipant(input: {
@@ -29,8 +30,19 @@ export async function createParticipant(input: {
     consentAttestedAt: input.consentAttested ? new Date().toISOString() : null,
     consentAttestedBy: input.consentAttested ? input.practitionerName : null,
     createdAt: new Date().toISOString(),
+    linkId: null,
   })
   return id
+}
+
+// Manual linkId entry — a stopgap until the full ParticipantContext import
+// exists. Vector still mints the value; this only lets a practitioner
+// record one by hand so bundle export (brief Part B, step 8) can be
+// exercised end-to-end before step 9 ships.
+export async function setParticipantLinkId(participantId: string, linkId: string | null) {
+  const participant = await db.participants.get(participantId)
+  if (!participant) throw new Error('Participant not found')
+  await db.participants.update(participantId, { linkId: linkId?.trim() || null })
 }
 
 export async function createBehaviour(input: {
@@ -250,7 +262,7 @@ export async function resolveFlag(flagId: string, resolutionNote: string) {
 export async function generateDocumentationExport(input: {
   participantId: string
   behaviourIds: string[]
-  format: DocumentationFormat
+  format: HtmlDocumentationFormat
   generatedBy: string
 }) {
   const participant = await db.participants.get(input.participantId)
@@ -300,6 +312,78 @@ export async function generateDocumentationExport(input: {
     contentSnapshot,
   })
   return id
+}
+
+export type GenerateBundleOutcome =
+  | { status: 'ok'; exportId: string }
+  | { status: 'blocked'; reason: string }
+
+// FbaOutcomeBundle export (brief Part B, step 8): assembles the bundle from
+// current data, validates it against the contract (belt-and-braces — the
+// same checks assembleFbaOutcomeBundle already enforces, plus the PII
+// denylist fuzz check, run once more immediately before it's written), and
+// stores it via the same immutable DocumentationExport snapshot mechanism
+// used for the HTML formats, so it shows up in the same audit trail.
+export async function generateFbaOutcomeBundleExport(input: {
+  participantId: string
+  behaviourIds: string[]
+  generatedBy: string
+}): Promise<GenerateBundleOutcome> {
+  const participant = await db.participants.get(input.participantId)
+  if (!participant) throw new Error('Participant not found')
+
+  const behaviours = (
+    await Promise.all(input.behaviourIds.map((id) => db.behaviours.get(id)))
+  ).filter((b): b is NonNullable<typeof b> => b !== undefined)
+
+  const perBehaviour = await Promise.all(
+    behaviours.map(async (behaviour) => {
+      const [episodes, formulations, hypotheses, riskFlagsForBehaviour] = await Promise.all([
+        db.episodes.where('behaviourId').equals(behaviour.id).sortBy('dateTime'),
+        db.formulations.where('behaviourId').equals(behaviour.id).toArray(),
+        db.hypotheses.where('behaviourId').equals(behaviour.id).sortBy('computedAt'),
+        db.riskFlags.where('behaviourId').equals(behaviour.id).toArray(),
+      ])
+      return {
+        behaviour,
+        episodes,
+        formulations,
+        latestHypothesis: hypotheses.length ? hypotheses[hypotheses.length - 1] : null,
+        riskFlags: riskFlagsForBehaviour,
+      }
+    }),
+  )
+
+  const id = newId()
+  const assembled = assembleFbaOutcomeBundle({
+    participant,
+    generatedBy: input.generatedBy,
+    generatedAt: new Date().toISOString(),
+    sourceExportId: id,
+    behaviours: perBehaviour,
+  })
+  if (!assembled.ok) return { status: 'blocked', reason: assembled.error }
+
+  const validation = validateFbaOutcomeBundle(assembled.bundle)
+  if (!validation.ok) {
+    return { status: 'blocked', reason: `Bundle failed contract validation: ${validation.errors.join(' ')}` }
+  }
+  const leakedKeys = findDenylistedKeys(assembled.bundle)
+  if (leakedKeys.length > 0) {
+    return { status: 'blocked', reason: `Bundle contains disallowed identifying keys: ${leakedKeys.join(', ')}.` }
+  }
+
+  await db.documentationExports.add({
+    id,
+    participantId: input.participantId,
+    behaviourIds: input.behaviourIds,
+    generatedAt: assembled.bundle.generatedAt,
+    generatedBy: input.generatedBy,
+    format: 'fba_outcome_bundle',
+    contentSnapshot: JSON.stringify(assembled.bundle, null, 2),
+  })
+
+  return { status: 'ok', exportId: id }
 }
 
 // Phase 4 — multi-informant handoff, QR only (brief §2-3).

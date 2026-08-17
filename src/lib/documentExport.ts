@@ -24,8 +24,13 @@ export interface BehaviourExportData {
   flags: RiskFlag[]
 }
 
+// The bundle format (brief Part B, step 8) is JSON assembled by
+// fbaOutcomeBundle.ts, not HTML — this renderer only ever handles the
+// other three.
+export type HtmlDocumentationFormat = Exclude<DocumentationFormat, 'fba_outcome_bundle'>
+
 export interface RenderInput {
-  format: DocumentationFormat
+  format: HtmlDocumentationFormat
   participant: Participant
   generatedBy: string
   generatedAt: string
@@ -51,7 +56,7 @@ function fmtDateTime(iso: string): string {
   return new Date(iso).toLocaleString()
 }
 
-const FORMAT_TITLE: Record<DocumentationFormat, string> = {
+const FORMAT_TITLE: Record<HtmlDocumentationFormat, string> = {
   clinical_report: 'Clinical Report',
   plan_appendix: 'Behaviour Support Plan Appendix',
   staff_training_summary: 'Staff Training Summary',

@@ -54,6 +54,7 @@ describe('backup table coverage', () => {
       consentAttestedAt: new Date().toISOString(),
       consentAttestedBy: 'Jo',
       createdAt: new Date().toISOString(),
+      linkId: null,
     })
     await db.behaviours.add({
       id: behaviourId,

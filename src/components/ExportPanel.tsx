@@ -1,11 +1,29 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../lib/db'
-import { generateDocumentationExport } from '../lib/actions'
+import { generateDocumentationExport, generateFbaOutcomeBundleExport, setParticipantLinkId } from '../lib/actions'
 import { usePractitioner } from '../lib/practitioner'
 import type { DocumentationFormat } from '../lib/types'
+import type { HtmlDocumentationFormat } from '../lib/documentExport'
 
-const FORMAT_OPTIONS: { value: DocumentationFormat; label: string; hint: string }[] = [
+const FORMAT_LABEL: Record<DocumentationFormat, string> = {
+  clinical_report: 'Clinical report',
+  plan_appendix: 'Plan appendix',
+  staff_training_summary: 'Staff training summary',
+  fba_outcome_bundle: 'FBA outcome bundle (for Vector)',
+}
+
+function downloadJson(json: string, filename: string) {
+  const blob = new Blob([json], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+const FORMAT_OPTIONS: { value: HtmlDocumentationFormat; label: string; hint: string }[] = [
   {
     value: 'clinical_report',
     label: 'Clinical report',
@@ -32,6 +50,7 @@ function openSnapshot(html: string) {
 }
 
 export function ExportPanel({ participantId }: { participantId: string }) {
+  const participant = useLiveQuery(() => db.participants.get(participantId), [participantId])
   const behaviours = useLiveQuery(
     () => db.behaviours.where('participantId').equals(participantId).toArray(),
     [participantId],
@@ -43,8 +62,11 @@ export function ExportPanel({ participantId }: { participantId: string }) {
   const practitioner = usePractitioner()
 
   const [selected, setSelected] = useState<Set<string>>(new Set())
-  const [format, setFormat] = useState<DocumentationFormat>('clinical_report')
+  const [format, setFormat] = useState<HtmlDocumentationFormat>('clinical_report')
   const [generating, setGenerating] = useState(false)
+  const [linkIdDraft, setLinkIdDraft] = useState('')
+  const [bundleGenerating, setBundleGenerating] = useState(false)
+  const [bundleBlocked, setBundleBlocked] = useState<string | null>(null)
 
   function toggle(id: string) {
     setSelected((prev) => {
@@ -69,6 +91,27 @@ export function ExportPanel({ participantId }: { participantId: string }) {
       if (record) openSnapshot(record.contentSnapshot)
     } finally {
       setGenerating(false)
+    }
+  }
+
+  async function handleGenerateBundle() {
+    if (!practitioner || selected.size === 0) return
+    setBundleGenerating(true)
+    setBundleBlocked(null)
+    try {
+      const outcome = await generateFbaOutcomeBundleExport({
+        participantId,
+        behaviourIds: [...selected],
+        generatedBy: `${practitioner.name}, ${practitioner.role}`,
+      })
+      if (outcome.status === 'blocked') {
+        setBundleBlocked(outcome.reason)
+        return
+      }
+      const record = await db.documentationExports.get(outcome.exportId)
+      if (record) downloadJson(record.contentSnapshot, `fba-outcome-bundle-${outcome.exportId}.json`)
+    } finally {
+      setBundleGenerating(false)
     }
   }
 
@@ -124,6 +167,44 @@ export function ExportPanel({ participantId }: { participantId: string }) {
         </p>
       </div>
 
+      <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">
+        <h2 className="text-sm font-semibold text-[#111111] dark:text-white">FBA outcome bundle (for Vector)</h2>
+        <p className="text-xs text-slate-500">
+          A structured JSON file — summary statement, hypothesis, evidence base and escalation
+          cycle — for Vector's Form 07. Uses the same behaviour selection above. Frame never
+          mints a linkId; it has to come from Vector.
+        </p>
+
+        <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+          Participant linkId
+          <div className="mt-1 flex gap-2">
+            <input
+              value={linkIdDraft || participant?.linkId || ''}
+              onChange={(e) => setLinkIdDraft(e.target.value)}
+              placeholder="Not linked yet"
+              className="flex-1 rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm"
+            />
+            <button
+              type="button"
+              onClick={() => setParticipantLinkId(participantId, linkIdDraft)}
+              disabled={!linkIdDraft.trim()}
+              className="rounded-md border border-slate-300 dark:border-slate-700 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 disabled:opacity-50"
+            >
+              Save
+            </button>
+          </div>
+        </label>
+
+        <button
+          onClick={handleGenerateBundle}
+          disabled={!practitioner || selected.size === 0 || bundleGenerating}
+          className="rounded-md bg-[#111111] dark:bg-white text-white dark:text-slate-900 px-4 py-2 text-sm font-medium disabled:opacity-50"
+        >
+          {bundleGenerating ? 'Generating…' : 'Generate & download bundle'}
+        </button>
+        {bundleBlocked && <p className="text-sm text-red-600">{bundleBlocked}</p>}
+      </div>
+
       <div>
         <h2 className="text-sm font-semibold text-[#111111] dark:text-white mb-2">Past exports</h2>
         {!exports?.length && <p className="text-sm text-slate-500">No exports generated yet.</p>}
@@ -131,19 +212,21 @@ export function ExportPanel({ participantId }: { participantId: string }) {
           {exports?.map((exp) => (
             <li key={exp.id} className="p-3 text-sm flex items-center justify-between gap-3">
               <div>
-                <div className="font-medium text-[#111111] dark:text-white">
-                  {FORMAT_OPTIONS.find((f) => f.value === exp.format)?.label ?? exp.format}
-                </div>
+                <div className="font-medium text-[#111111] dark:text-white">{FORMAT_LABEL[exp.format]}</div>
                 <div className="text-xs text-slate-500">
                   {new Date(exp.generatedAt).toLocaleString()} by {exp.generatedBy} ·{' '}
                   {exp.behaviourIds.length} behaviour(s)
                 </div>
               </div>
               <button
-                onClick={() => openSnapshot(exp.contentSnapshot)}
+                onClick={() =>
+                  exp.format === 'fba_outcome_bundle'
+                    ? downloadJson(exp.contentSnapshot, `fba-outcome-bundle-${exp.id}.json`)
+                    : openSnapshot(exp.contentSnapshot)
+                }
                 className="shrink-0 rounded-md border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200"
               >
-                View
+                {exp.format === 'fba_outcome_bundle' ? 'Download' : 'View'}
               </button>
             </li>
           ))}
