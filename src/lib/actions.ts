@@ -3,6 +3,7 @@ import type {
   AntecedentTag,
   ConsequenceTag,
   DocumentationFormat,
+  ParticipantProfile,
   RiskFlagItem,
   ScreenerResponse,
 } from './types'
@@ -27,6 +28,20 @@ export async function createParticipant(input: {
     createdAt: new Date().toISOString(),
   })
   return id
+}
+
+// Hand edit of the Participant Profile tab. Manual edits always clear the
+// import provenance fields — this is now a hand-maintained profile, not the
+// PBS import verbatim, and should read as such (brief step 3/4).
+export async function updateParticipantProfile(
+  participantId: string,
+  profile: Omit<ParticipantProfile, 'sourceSystem' | 'exportedAt' | 'importedAt'>,
+) {
+  const participant = await db.participants.get(participantId)
+  if (!participant) throw new Error('Participant not found')
+  await db.participants.update(participantId, {
+    profile: { ...profile, sourceSystem: null, exportedAt: null, importedAt: null },
+  })
 }
 
 export async function createBehaviour(input: {

@@ -41,6 +41,16 @@ class FbaDatabase extends Dexie {
     this.version(4).stores({
       screenerInvites: 'id, behaviourId, token, status, createdAt',
     })
+    // Adds Participant.profile (Tier 0 identity fields — see types.ts and
+    // docs/participant-import-schema.md). No new index: nothing queries by
+    // a profile field yet. Bumped anyway, on the same participants index
+    // set as version 1, to mark the schema-shape change explicitly rather
+    // than relying on Dexie's schema-less tolerance of new object
+    // properties — existing records simply have no `profile` until
+    // imported or hand-entered.
+    this.version(5).stores({
+      participants: 'id, createdAt',
+    })
   }
 }
 

@@ -5,8 +5,15 @@ import { db } from '../lib/db'
 import { createBehaviour } from '../lib/actions'
 import { usePractitioner } from '../lib/practitioner'
 import { ExportPanel } from '../components/ExportPanel'
+import { ParticipantProfilePanel } from '../components/ParticipantProfilePanel'
 
-type Section = 'behaviours' | 'documentation'
+type Section = 'profile' | 'behaviours' | 'documentation'
+
+const SECTION_LABELS: Record<Section, string> = {
+  profile: 'Profile',
+  behaviours: 'Behaviours',
+  documentation: 'Documentation',
+}
 
 export function ParticipantDetail() {
   const { participantId = '' } = useParams()
@@ -50,7 +57,7 @@ export function ParticipantDetail() {
       </div>
 
       <div className="flex gap-1 border-b border-slate-200 dark:border-slate-800">
-        {(['behaviours', 'documentation'] as Section[]).map((s) => (
+        {(['profile', 'behaviours', 'documentation'] as Section[]).map((s) => (
           <button
             key={s}
             onClick={() => setSection(s)}
@@ -60,11 +67,12 @@ export function ParticipantDetail() {
                 : 'border-transparent text-slate-500'
             }`}
           >
-            {s === 'behaviours' ? 'Behaviours' : 'Documentation'}
+            {SECTION_LABELS[s]}
           </button>
         ))}
       </div>
 
+      {section === 'profile' && <ParticipantProfilePanel participantId={participantId} />}
       {section === 'documentation' && <ExportPanel participantId={participantId} />}
 
       {section === 'behaviours' && (

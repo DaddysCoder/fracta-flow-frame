@@ -13,6 +13,39 @@ export interface Practitioner {
   disclaimerAcknowledgedAt: string | null
 }
 
+// Tier 0 identity fields (PBS field registry) — see
+// docs/participant-import-schema.md for the full contract. Additive to the
+// existing opaque identifyingDetails string, never a replacement for it:
+// identifyingDetails stays the one thing every existing screen/export reads,
+// so nothing already shipped needs to change. `profile` is populated either
+// by hand in the Participant Profile tab, or by importing a Tier-0-shaped
+// JSON payload exported from the PBS system. It carries identity only —
+// episode/screener/hypothesis records are never joined to it automatically,
+// same isolation boundary as before this field group existed.
+export interface ParticipantContact {
+  label: string // e.g. "Primary contact", "Guardian/nominee"
+  detail: string // free text as the source system captured it (phone/email/address)
+}
+
+export interface ParticipantProfile {
+  preferredName: string
+  legalName: string
+  dob: string // ISO date (YYYY-MM-DD)
+  ndisNumber: string
+  location: string | null
+  contacts: ParticipantContact[]
+  // referrer/practitioner/provider are single combined strings in the PBS
+  // registry (referrer.identity, practitioner.identity, provider.details) —
+  // "name, role and organisation" together, not separate sub-fields, since
+  // PBS doesn't capture them separately either.
+  referrerIdentity: string
+  practitionerIdentity: string | null // absent if imported before PBS triage (Form 02) completes
+  providerDetails: string | null
+  sourceSystem: string | null // e.g. "pbs-registry"; null for a hand-entered profile
+  exportedAt: string | null // PBS's own export timestamp; null for a hand-entered profile
+  importedAt: string | null // when Frame imported this; null for a hand-entered profile
+}
+
 export interface Participant {
   id: string
   // Kept logically separate from all behavioural records below — never joined
@@ -22,6 +55,7 @@ export interface Participant {
   consentAttestedAt: string | null
   consentAttestedBy: string | null // practitioner name/id, not vendor-verified
   createdAt: string
+  profile?: ParticipantProfile
 }
 
 export interface Behaviour {
