@@ -1,14 +1,12 @@
 import { type FormEvent, useState } from 'react'
 import { createFormulation } from '../lib/actions'
 import { usePractitioner } from '../lib/practitioner'
-import {
-  ESCALATION_ITEMS,
-  ESCALATION_PHASES,
-  ESCALATION_PHASE_LABEL,
-  emptyEscalationCycle,
-} from '../lib/escalationContent'
-import type { EscalationCycle, EscalationPhase } from '../lib/types'
+import { ESCALATION_ITEMS, ESCALATION_PHASES, ESCALATION_PHASE_LABEL, emptyEscalationCycle } from '../lib/escalationContent'
+import { ANTECEDENT_CONTEXT_OPTIONS, CONSEQUENCE_OPTIONS, SETTING_EVENT_OPTIONS } from '../lib/fbaContent'
+import { emptyChecklistEntry } from '../lib/abcOptions'
+import type { ChecklistEntry, EscalationCycle, EscalationPhase } from '../lib/types'
 import { Tooltip } from './Tooltip'
+import { ChecklistGroup } from './ChecklistGroup'
 
 const emptyPrompts = { recentExample: '', intenseEpisode: '', antecedentAndResponse: '' }
 const emptyRiskScenarios = { highRisk: '', lowRisk: '' }
@@ -22,9 +20,9 @@ export function FormulationForm({ behaviourId }: { behaviourId: string }) {
   const [prompts, setPrompts] = useState(emptyPrompts)
   const [riskScenarios, setRiskScenarios] = useState(emptyRiskScenarios)
   const [cycle, setCycle] = useState<EscalationCycle>(emptyEscalationCycle())
-  const [customDraft, setCustomDraft] = useState<Record<EscalationPhase, string>>(
-    Object.fromEntries(ESCALATION_PHASES.map((p) => [p, ''])) as Record<EscalationPhase, string>,
-  )
+  const [antecedentContext, setAntecedentContext] = useState<ChecklistEntry>(emptyChecklistEntry())
+  const [consequenceContext, setConsequenceContext] = useState<ChecklistEntry>(emptyChecklistEntry())
+  const [settingEvents, setSettingEvents] = useState<ChecklistEntry>(emptyChecklistEntry())
   const [saved, setSaved] = useState(false)
 
   function toggleItem(phase: EscalationPhase, itemId: string) {
@@ -37,14 +35,11 @@ export function FormulationForm({ behaviourId }: { behaviourId: string }) {
     })
   }
 
-  function addCustomItem(phase: EscalationPhase) {
-    const text = customDraft[phase].trim()
-    if (!text) return
+  function addCustomItem(phase: EscalationPhase, text: string) {
     setCycle((prev) => ({
       ...prev,
       [phase]: { ...prev[phase], customItems: [...prev[phase].customItems, text] },
     }))
-    setCustomDraft((prev) => ({ ...prev, [phase]: '' }))
   }
 
   function removeCustomItem(phase: EscalationPhase, text: string) {
@@ -52,6 +47,26 @@ export function FormulationForm({ behaviourId }: { behaviourId: string }) {
       ...prev,
       [phase]: { ...prev[phase], customItems: prev[phase].customItems.filter((t) => t !== text) },
     }))
+  }
+
+  function toggleEntryItem(
+    setter: React.Dispatch<React.SetStateAction<ChecklistEntry>>,
+    itemId: string,
+  ) {
+    setter((prev) => ({
+      ...prev,
+      checkedItems: prev.checkedItems.includes(itemId)
+        ? prev.checkedItems.filter((id) => id !== itemId)
+        : [...prev.checkedItems, itemId],
+    }))
+  }
+
+  function addEntryCustom(setter: React.Dispatch<React.SetStateAction<ChecklistEntry>>, text: string) {
+    setter((prev) => ({ ...prev, customItems: [...prev.customItems, text] }))
+  }
+
+  function removeEntryCustom(setter: React.Dispatch<React.SetStateAction<ChecklistEntry>>, text: string) {
+    setter((prev) => ({ ...prev, customItems: prev.customItems.filter((t) => t !== text) }))
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -67,6 +82,9 @@ export function FormulationForm({ behaviourId }: { behaviourId: string }) {
       frequencyImpression,
       riskScenarios,
       escalationCycle: cycle,
+      antecedentContext,
+      consequenceContext,
+      settingEvents,
     })
     setInformantName('')
     setInformantRole('')
@@ -75,6 +93,9 @@ export function FormulationForm({ behaviourId }: { behaviourId: string }) {
     setPrompts(emptyPrompts)
     setRiskScenarios(emptyRiskScenarios)
     setCycle(emptyEscalationCycle())
+    setAntecedentContext(emptyChecklistEntry())
+    setConsequenceContext(emptyChecklistEntry())
+    setSettingEvents(emptyChecklistEntry())
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
@@ -190,6 +211,45 @@ export function FormulationForm({ behaviourId }: { behaviourId: string }) {
 
       <div>
         <span className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
+          <Tooltip term="antecedent">Antecedents / context that apply to this behaviour</Tooltip>
+        </span>
+        <ChecklistGroup
+          items={ANTECEDENT_CONTEXT_OPTIONS}
+          entry={antecedentContext}
+          onToggle={(id) => toggleEntryItem(setAntecedentContext, id)}
+          onAddCustom={(text) => addEntryCustom(setAntecedentContext, text)}
+          onRemoveCustom={(text) => removeEntryCustom(setAntecedentContext, text)}
+        />
+      </div>
+
+      <div>
+        <span className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
+          <Tooltip term="consequence">Consequences that apply to this behaviour</Tooltip>
+        </span>
+        <ChecklistGroup
+          items={CONSEQUENCE_OPTIONS}
+          entry={consequenceContext}
+          onToggle={(id) => toggleEntryItem(setConsequenceContext, id)}
+          onAddCustom={(text) => addEntryCustom(setConsequenceContext, text)}
+          onRemoveCustom={(text) => removeEntryCustom(setConsequenceContext, text)}
+        />
+      </div>
+
+      <div>
+        <span className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
+          <Tooltip term="setting event">Setting events that apply to this behaviour</Tooltip>
+        </span>
+        <ChecklistGroup
+          items={SETTING_EVENT_OPTIONS}
+          entry={settingEvents}
+          onToggle={(id) => toggleEntryItem(setSettingEvents, id)}
+          onAddCustom={(text) => addEntryCustom(setSettingEvents, text)}
+          onRemoveCustom={(text) => removeEntryCustom(setSettingEvents, text)}
+        />
+      </div>
+
+      <div>
+        <span className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
           <Tooltip term="behaviour">Escalation cycle</Tooltip>
         </span>
         <div className="space-y-3">
@@ -198,63 +258,13 @@ export function FormulationForm({ behaviourId }: { behaviourId: string }) {
               <p className="text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">
                 {ESCALATION_PHASE_LABEL[phase]}
               </p>
-              <div className="flex flex-wrap gap-2">
-                {ESCALATION_ITEMS[phase].map((item) => (
-                  <label
-                    key={item.id}
-                    className={`cursor-pointer rounded-md border px-2 py-1 text-xs ${
-                      cycle[phase].checkedItems.includes(item.id)
-                        ? 'border-[#111111] dark:border-white bg-[#111111] dark:bg-white text-white dark:text-slate-900'
-                        : 'border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400'
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      className="sr-only"
-                      checked={cycle[phase].checkedItems.includes(item.id)}
-                      onChange={() => toggleItem(phase, item.id)}
-                    />
-                    {item.label}
-                  </label>
-                ))}
-                {cycle[phase].customItems.map((text) => (
-                  <span
-                    key={text}
-                    className="flex items-center gap-1 rounded-md border border-dashed border-slate-400 px-2 py-1 text-xs text-slate-600 dark:text-slate-300"
-                  >
-                    {text}
-                    <button
-                      type="button"
-                      onClick={() => removeCustomItem(phase, text)}
-                      className="text-slate-400 hover:text-slate-700 dark:hover:text-white"
-                      aria-label={`Remove ${text}`}
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-              <div className="mt-2 flex gap-2">
-                <input
-                  value={customDraft[phase]}
-                  onChange={(e) => setCustomDraft((prev) => ({ ...prev, [phase]: e.target.value }))}
-                  placeholder="Add your own"
-                  className="flex-1 rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-2 py-1 text-xs"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      addCustomItem(phase)
-                    }
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => addCustomItem(phase)}
-                  className="rounded-md border border-slate-300 dark:border-slate-700 px-2 py-1 text-xs text-slate-600 dark:text-slate-300"
-                >
-                  Add
-                </button>
-              </div>
+              <ChecklistGroup
+                items={ESCALATION_ITEMS[phase]}
+                entry={cycle[phase]}
+                onToggle={(id) => toggleItem(phase, id)}
+                onAddCustom={(text) => addCustomItem(phase, text)}
+                onRemoveCustom={(text) => removeCustomItem(phase, text)}
+              />
             </div>
           ))}
         </div>

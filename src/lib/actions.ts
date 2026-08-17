@@ -1,6 +1,7 @@
 import { db, newId } from './db'
 import type {
   AntecedentTag,
+  ChecklistEntry,
   ConsequenceTag,
   DocumentationFormat,
   EscalationCycle,
@@ -107,6 +108,9 @@ export async function createFormulation(input: {
   frequencyImpression: string
   riskScenarios: FormulationRiskScenarios
   escalationCycle: EscalationCycle
+  antecedentContext: ChecklistEntry
+  consequenceContext: ChecklistEntry
+  settingEvents: ChecklistEntry
 }) {
   const id = newId()
   await db.formulations.add({
@@ -121,6 +125,9 @@ export async function createFormulation(input: {
     frequencyImpression: input.frequencyImpression.trim(),
     riskScenarios: input.riskScenarios,
     escalationCycle: input.escalationCycle,
+    antecedentContext: input.antecedentContext,
+    consequenceContext: input.consequenceContext,
+    settingEvents: input.settingEvents,
   })
   return id
 }

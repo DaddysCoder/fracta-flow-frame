@@ -1,6 +1,7 @@
 import Dexie, { type EntityTable } from 'dexie'
 import type {
   Behaviour,
+  BehaviourCustomOption,
   DocumentationExport,
   Episode,
   Formulation,
@@ -23,6 +24,7 @@ class FbaDatabase extends Dexie {
   documentationExports!: EntityTable<DocumentationExport, 'id'>
   screenerInvites!: EntityTable<ScreenerInvite, 'id'>
   formulations!: EntityTable<Formulation, 'id'>
+  behaviourCustomOptions!: EntityTable<BehaviourCustomOption, 'id'>
 
   constructor() {
     super('fba-screener')
@@ -45,6 +47,9 @@ class FbaDatabase extends Dexie {
     })
     this.version(5).stores({
       formulations: 'id, behaviourId, conductedAt',
+    })
+    this.version(6).stores({
+      behaviourCustomOptions: 'id, behaviourId, category, createdAt',
     })
   }
 }

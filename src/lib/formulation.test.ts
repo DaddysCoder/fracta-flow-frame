@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { db, newId } from './db'
 import { createFormulation } from './actions'
 import { emptyEscalationCycle } from './escalationContent'
+import { emptyChecklistEntry } from './abcOptions'
 
 describe('formulation as a collection', () => {
   it('adds multiple formulation records for the same behaviour without overwriting', async () => {
@@ -20,6 +21,9 @@ describe('formulation as a collection', () => {
       frequencyImpression: 'A few times a week',
       riskScenarios: { highRisk: '', lowRisk: '' },
       escalationCycle: emptyEscalationCycle(),
+      antecedentContext: emptyChecklistEntry(),
+      consequenceContext: emptyChecklistEntry(),
+      settingEvents: emptyChecklistEntry(),
     })
     await createFormulation({
       behaviourId,
@@ -31,6 +35,9 @@ describe('formulation as a collection', () => {
       frequencyImpression: 'Daily',
       riskScenarios: { highRisk: '', lowRisk: '' },
       escalationCycle: emptyEscalationCycle(),
+      antecedentContext: emptyChecklistEntry(),
+      consequenceContext: emptyChecklistEntry(),
+      settingEvents: emptyChecklistEntry(),
     })
 
     const formulations = await db.formulations.where('behaviourId').equals(behaviourId).toArray()

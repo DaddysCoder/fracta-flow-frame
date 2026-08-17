@@ -158,10 +158,17 @@ export type EscalationPhase =
   | 'de_escalation'
   | 'recovery'
 
-export interface EscalationPhaseEntry {
-  checkedItems: string[] // stable IDs into ESCALATION_CONTENT, not display text
-  customItems: string[] // free text, practitioner-entered
+// Shared shape for every "starter checklist + add your own" field in a
+// Formulation — escalation-phase items, antecedent/consequence/setting-event
+// context. checkedItems are stable IDs into fbaContent's option pools, not
+// display text; customItems are free text.
+export interface ChecklistEntry {
+  checkedItems: string[]
+  customItems: string[]
 }
+
+/** @deprecated use ChecklistEntry — kept as an alias so existing call sites keep compiling. */
+export type EscalationPhaseEntry = ChecklistEntry
 
 export type EscalationCycle = Record<EscalationPhase, EscalationPhaseEntry>
 
@@ -192,4 +199,27 @@ export interface Formulation {
   frequencyImpression: string
   riskScenarios: FormulationRiskScenarios
   escalationCycle: EscalationCycle
+
+  // Phase 1.3 — dynamic per-behaviour ABC checklists (brief Part B, step 5)
+  // draw their option pool from these three fields, unioned across all of a
+  // behaviour's formulations. Same starter-checklist + "add your own"
+  // pattern as escalationCycle, against fbaContent's ANTECEDENT_CONTEXT_OPTIONS
+  // / CONSEQUENCE_OPTIONS / SETTING_EVENT_OPTIONS.
+  antecedentContext: ChecklistEntry
+  consequenceContext: ChecklistEntry
+  settingEvents: ChecklistEntry
+}
+
+// Custom items entered directly at ABC/episode-logging time (not through a
+// formulation interview) get written back here so they're offered next time
+// rather than re-typed (brief Part B, step 5) — kept separate from
+// Formulation, which stays an interview-only, append-only audit record.
+export type AbcOptionCategory = 'antecedent' | 'consequence' | 'settingEvent'
+
+export interface BehaviourCustomOption {
+  id: string
+  behaviourId: string
+  category: AbcOptionCategory
+  text: string
+  createdAt: string
 }

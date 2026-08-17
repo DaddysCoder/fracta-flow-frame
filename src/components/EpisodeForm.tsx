@@ -1,4 +1,5 @@
 import { type FormEvent, useState } from 'react'
+import { useLiveQuery } from 'dexie-react-hooks'
 import { createEpisode } from '../lib/actions'
 import { usePractitioner } from '../lib/practitioner'
 import {
@@ -8,7 +9,8 @@ import {
   RISK_FLAG_OPTIONS,
   SEVERITY_SCALE,
 } from '../lib/scales'
-import type { AntecedentTag, ConsequenceTag, RiskFlagItem } from '../lib/types'
+import { addCustomAbcOption, getAbcOptions } from '../lib/abcOptions'
+import type { AbcOptionCategory, AntecedentTag, ConsequenceTag, RiskFlagItem } from '../lib/types'
 import { Tooltip } from './Tooltip'
 
 function nowLocal(): string {
@@ -16,6 +18,74 @@ function nowLocal(): string {
   d.setSeconds(0, 0)
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
   return d.toISOString().slice(0, 16)
+}
+
+function appendText(existing: string, addition: string): string {
+  const trimmedExisting = existing.trim()
+  return trimmedExisting ? `${trimmedExisting}; ${addition}` : addition
+}
+
+// Dynamic per-behaviour ABC checklist (brief Part B, step 5) — the options
+// offered are the union of a behaviour's formulation-derived items plus
+// anything written back at logging time, falling back to the generic
+// starter lists when the behaviour has no formulation yet (abcOptions.ts).
+function AbcChipPicker({
+  behaviourId,
+  category,
+  onPick,
+}: {
+  behaviourId: string
+  category: AbcOptionCategory
+  onPick: (label: string) => void
+}) {
+  const options = useLiveQuery(() => getAbcOptions(behaviourId), [behaviourId])
+  const [draft, setDraft] = useState('')
+
+  async function addOwn() {
+    const text = draft.trim()
+    if (!text) return
+    await addCustomAbcOption(behaviourId, category, text)
+    onPick(text)
+    setDraft('')
+  }
+
+  return (
+    <div className="mt-2 space-y-1.5">
+      <div className="flex flex-wrap gap-1.5">
+        {(options?.[category] ?? []).map((label) => (
+          <button
+            key={label}
+            type="button"
+            onClick={() => onPick(label)}
+            className="rounded-md border border-slate-300 dark:border-slate-700 px-2 py-0.5 text-xs text-slate-600 dark:text-slate-300 hover:border-[#111111] dark:hover:border-white"
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <div className="flex gap-1.5">
+        <input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder="Add your own"
+          className="flex-1 rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-2 py-1 text-xs"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              void addOwn()
+            }
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => void addOwn()}
+          className="rounded-md border border-slate-300 dark:border-slate-700 px-2 py-1 text-xs text-slate-600 dark:text-slate-300"
+        >
+          Add
+        </button>
+      </div>
+    </div>
+  )
 }
 
 export function EpisodeForm({ behaviourId }: { behaviourId: string }) {
@@ -97,15 +167,22 @@ export function EpisodeForm({ behaviourId }: { behaviourId: string }) {
         </label>
       </div>
 
-      <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-        <Tooltip term="setting event">Setting event</Tooltip>
-        <input
-          value={settingEvent}
-          onChange={(e) => setSettingEvent(e.target.value)}
-          placeholder="e.g. Poor sleep, change of routine, new support worker"
-          className="mt-1 block w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm"
+      <div>
+        <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+          <Tooltip term="setting event">Setting event</Tooltip>
+          <input
+            value={settingEvent}
+            onChange={(e) => setSettingEvent(e.target.value)}
+            placeholder="e.g. Poor sleep, change of routine, new support worker"
+            className="mt-1 block w-full rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 px-3 py-2 text-sm"
+          />
+        </label>
+        <AbcChipPicker
+          behaviourId={behaviourId}
+          category="settingEvent"
+          onPick={(label) => setSettingEvent((prev) => appendText(prev, label))}
         />
-      </label>
+      </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div>
@@ -120,6 +197,11 @@ export function EpisodeForm({ behaviourId }: { behaviourId: string }) {
               placeholder="What happened immediately before"
             />
           </label>
+          <AbcChipPicker
+            behaviourId={behaviourId}
+            category="antecedent"
+            onPick={(label) => setAntecedentText((prev) => appendText(prev, label))}
+          />
           <select
             value={antecedentTag}
             onChange={(e) => setAntecedentTag(e.target.value as AntecedentTag)}
@@ -144,6 +226,11 @@ export function EpisodeForm({ behaviourId }: { behaviourId: string }) {
               placeholder="What happened immediately after"
             />
           </label>
+          <AbcChipPicker
+            behaviourId={behaviourId}
+            category="consequence"
+            onPick={(label) => setConsequenceText((prev) => appendText(prev, label))}
+          />
           <select
             value={consequenceTag}
             onChange={(e) => setConsequenceTag(e.target.value as ConsequenceTag)}
