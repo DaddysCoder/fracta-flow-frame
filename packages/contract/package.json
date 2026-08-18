@@ -1,0 +1,13 @@
+{
+  "name": "@fracta/contract",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared, versioned contract between Frame (fba-screener) and Vector — the only thing that crosses the repo boundary.",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "sideEffects": false
+}
