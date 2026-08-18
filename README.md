@@ -1,11 +1,19 @@
 # Fracta Flow — Behaviour Support, by Primitive AI
 
+> **Current status, recovered work, and the Vector integration boundary
+> live in [`PROJECT_STATUS.md`](./PROJECT_STATUS.md)** — read that first if
+> you're picking this repo up. The phase write-ups below are historical
+> (Phase 1–4 only) and predate phases 1.1–1.5 and the `@fracta/contract`
+> boundary package.
+
 A behaviour support practitioner tool combining structured behaviour/episode
 (ABC) logging with a FAST-structured function-of-behaviour screener — local-first,
 decision support only. **Phase 1 (MVP) + Phase 2 (triangulation) + Phase 3
-(escalation & documentation) + Phase 4 (multi-informant QR handoff)** of the
-phased build described in the coding brief, under the Fracta Flow product
-brand (Primitive AI is the parent company).
+(escalation & documentation) + Phase 4 (multi-informant QR handoff)**, plus
+phases 1.1–1.5 (wording audit, dynamic checklists, formulation-as-collection,
+escalation cycle, NDIS terminology, summary statements, practitioner
+confidence, cross-cutting dashboard) and the `@fracta/contract` Vector
+integration boundary — see `PROJECT_STATUS.md` for the full current picture.
 
 ### Brand identity
 
