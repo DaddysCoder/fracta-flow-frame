@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../lib/db'
-import { generateDocumentationExport } from '../lib/actions'
+import { generateDocumentationExport, generateFbaOutcomeBundleExport, setParticipantLinkId } from '../lib/actions'
 import { usePractitioner } from '../lib/practitioner'
 import type { DocumentationFormat } from '../lib/types'
 
@@ -23,8 +23,8 @@ const FORMAT_OPTIONS: { value: DocumentationFormat; label: string; hint: string 
   },
 ]
 
-function openSnapshot(html: string) {
-  const blob = new Blob([html], { type: 'text/html' })
+function openSnapshot(html: string, mimeType = 'text/html') {
+  const blob = new Blob([html], { type: mimeType })
   const url = URL.createObjectURL(blob)
   window.open(url, '_blank', 'noopener,noreferrer')
   // Revoke well after the new tab has had a chance to load it.
@@ -32,6 +32,7 @@ function openSnapshot(html: string) {
 }
 
 export function ExportPanel({ participantId }: { participantId: string }) {
+  const participant = useLiveQuery(() => db.participants.get(participantId), [participantId])
   const behaviours = useLiveQuery(
     () => db.behaviours.where('participantId').equals(participantId).toArray(),
     [participantId],
@@ -45,6 +46,9 @@ export function ExportPanel({ participantId }: { participantId: string }) {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [format, setFormat] = useState<DocumentationFormat>('clinical_report')
   const [generating, setGenerating] = useState(false)
+  const [bundleGenerating, setBundleGenerating] = useState(false)
+  const [bundleError, setBundleError] = useState<string | null>(null)
+  const [linkIdDraft, setLinkIdDraft] = useState('')
 
   function toggle(id: string) {
     setSelected((prev) => {
@@ -70,6 +74,32 @@ export function ExportPanel({ participantId }: { participantId: string }) {
     } finally {
       setGenerating(false)
     }
+  }
+
+  async function handleGenerateBundle() {
+    if (!practitioner || selected.size === 0) return
+    setBundleGenerating(true)
+    setBundleError(null)
+    try {
+      const outcome = await generateFbaOutcomeBundleExport({
+        participantId,
+        behaviourIds: [...selected],
+        generatedBy: `${practitioner.name}, ${practitioner.role}`,
+      })
+      if (outcome.status === 'blocked') {
+        setBundleError(outcome.reason)
+        return
+      }
+      const record = await db.documentationExports.get(outcome.exportId)
+      if (record) openSnapshot(record.contentSnapshot, 'application/json')
+    } finally {
+      setBundleGenerating(false)
+    }
+  }
+
+  async function handleSetLinkId() {
+    await setParticipantLinkId(participantId, linkIdDraft)
+    setLinkIdDraft('')
   }
 
   return (
@@ -122,6 +152,47 @@ export function ExportPanel({ participantId }: { participantId: string }) {
         <p className="text-xs text-slate-400">
           Opens as print-friendly HTML in a new tab — use your browser's print-to-PDF to save it.
         </p>
+      </div>
+
+      <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">
+        <h2 className="text-sm font-semibold text-[#111111] dark:text-white">FBA Outcome Bundle (for Vector)</h2>
+        <p className="text-xs text-slate-500">
+          A structured JSON handoff of the behaviours checked above — one-way, Frame to Vector. Never carries
+          identifying details, only the opaque linkId below.
+        </p>
+
+        {participant?.linkId ? (
+          <p className="text-xs text-slate-500">
+            Linked to Vector as <span className="font-mono">{participant.linkId}</span>
+          </p>
+        ) : (
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={linkIdDraft}
+              onChange={(e) => setLinkIdDraft(e.target.value)}
+              placeholder="Paste linkId from Vector"
+              className="flex-1 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-2 py-1 text-sm"
+            />
+            <button
+              onClick={handleSetLinkId}
+              disabled={!linkIdDraft.trim()}
+              className="shrink-0 rounded-md border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 disabled:opacity-50"
+            >
+              Set link
+            </button>
+          </div>
+        )}
+
+        <button
+          onClick={handleGenerateBundle}
+          disabled={!practitioner || selected.size === 0 || bundleGenerating}
+          className="rounded-md border border-[#111111] dark:border-white text-[#111111] dark:text-white px-4 py-2 text-sm font-medium disabled:opacity-50"
+        >
+          {bundleGenerating ? 'Generating…' : 'Generate FBA Outcome Bundle'}
+        </button>
+        {bundleError && <p className="text-xs text-red-600 dark:text-red-400">{bundleError}</p>}
+        <p className="text-xs text-slate-400">Uses the same behaviour selection as above.</p>
       </div>
 
       <div>

@@ -12,7 +12,16 @@ import { HandoffPanel } from '../components/HandoffPanel'
 import { FormulationForm } from '../components/FormulationForm'
 import { FormulationList } from '../components/FormulationList'
 import { InfoHint } from '../components/InfoHint'
+import { BehaviourTrendChart } from '../components/BehaviourTrendChart'
 import { buildSummaryStatement } from '../lib/summaryStatement'
+import { renderBlankAbcForm, renderBlankFormulationForm } from '../lib/printableForms'
+
+function openPrintable(html: string) {
+  const blob = new Blob([html], { type: 'text/html' })
+  const url = URL.createObjectURL(blob)
+  window.open(url, '_blank', 'noopener,noreferrer')
+  setTimeout(() => URL.revokeObjectURL(url), 60_000)
+}
 
 type Tab = 'episodes' | 'formulation' | 'screener' | 'triangulation' | 'flags' | 'handoff'
 
@@ -92,6 +101,13 @@ export function BehaviourDetail() {
 
       {tab === 'episodes' && (
         <div className="space-y-6">
+          <BehaviourTrendChart behaviourId={behaviourId} />
+          <button
+            onClick={() => openPrintable(renderBlankAbcForm())}
+            className="text-xs text-slate-500 hover:underline"
+          >
+            Print blank ABC/episode form
+          </button>
           <EpisodeForm behaviourId={behaviourId} />
           <EpisodeList behaviourId={behaviourId} />
         </div>
@@ -99,6 +115,12 @@ export function BehaviourDetail() {
 
       {tab === 'formulation' && (
         <div className="space-y-6">
+          <button
+            onClick={() => openPrintable(renderBlankFormulationForm())}
+            className="text-xs text-slate-500 hover:underline"
+          >
+            Print blank formulation interview form
+          </button>
           <FormulationForm behaviourId={behaviourId} />
           <FormulationList behaviourId={behaviourId} />
         </div>
