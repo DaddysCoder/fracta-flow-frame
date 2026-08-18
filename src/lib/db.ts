@@ -123,6 +123,22 @@ class FbaDatabase extends Dexie {
           f.informantRole ??= null
         }),
     )
+
+    // Recovered from claude/frame-phase-1-contract-qxzs36: linkId/planCycle/
+    // knownBehaviourLabels on Participant, backfilled null/[] for existing
+    // rows — a Frame-only participant created before this migration has no
+    // Vector link yet and cannot emit an FbaOutcomeBundle until one is set
+    // (see fbaOutcomeBundle.ts / participantContextImport.ts).
+    this.version(13).upgrade((tx) =>
+      tx
+        .table('participants')
+        .toCollection()
+        .modify((p) => {
+          p.linkId ??= null
+          p.planCycle ??= null
+          p.knownBehaviourLabels ??= []
+        }),
+    )
   }
 }
 

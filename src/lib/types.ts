@@ -1,5 +1,12 @@
 // Data model — Phase 1 MVP + Phase 2 triangulation + Phase 3 escalation/documentation (brief §5).
 
+// Recovered from claude/frame-phase-1-contract-qxzs36 — the shared PlanCycle
+// shape that crosses the Frame/Vector boundary (@fracta/contract A2). Frame
+// never constructs one itself; it only ever stores what a ParticipantContext
+// import (see participantContextImport.ts) carried in.
+import type { PlanCycle } from '@fracta/contract'
+export type { PlanCycle }
+
 export type ConsequenceTag = 'attention' | 'escape' | 'tangible' | 'automatic' | 'none_observed'
 export type RiskFlagItem = 'injury' | 'property_damage' | 'elopement' | 'self_injury' | 'other'
 export type ScreenerDomain = 'attention' | 'escape' | 'tangible' | 'automatic'
@@ -21,6 +28,16 @@ export interface Participant {
   consentAttestedAt: string | null
   consentAttestedBy: string | null // practitioner name/id, not vendor-verified
   createdAt: string
+  // Opaque link into Vector, minted by Vector and stored here — Frame never
+  // generates one (contract A1). null for a Frame-only participant, which
+  // cannot emit an FbaOutcomeBundle as a result (fails closed) — see
+  // fbaOutcomeBundle.ts.
+  linkId: string | null
+  // The rest of this block is populated only via a ParticipantContext
+  // import (see participantContextImport.ts) — null/empty for a
+  // Frame-only participant.
+  planCycle: PlanCycle | null
+  knownBehaviourLabels: string[] // offered as suggestions on "Add behaviour" — never auto-created
 }
 
 export interface Behaviour {
@@ -141,7 +158,17 @@ export interface RiskFlag {
   resolutionNote: string | null
 }
 
-export type DocumentationFormat = 'clinical_report' | 'plan_appendix' | 'staff_training_summary'
+export type DocumentationFormat =
+  | 'clinical_report'
+  | 'plan_appendix'
+  | 'staff_training_summary'
+  // Recovered from claude/frame-phase-1-contract-qxzs36 — the JSON payload
+  // for Vector's plan-authoring import (contract A3). Reuses the same
+  // immutable-snapshot storage mechanism as the HTML formats above;
+  // contentSnapshot holds JSON.stringify(FbaOutcomeBundle) instead of
+  // rendered HTML. See fbaOutcomeBundle.ts / actions.ts's
+  // generateFbaOutcomeBundleExport.
+  | 'fba_outcome_bundle'
 
 export interface DocumentationExport {
   id: string

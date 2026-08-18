@@ -1,4 +1,5 @@
 import type { EntityTable } from 'dexie'
+import { findDenylistedKeys, validateFbaOutcomeBundle, validateParticipantContext, type ParticipantContext } from '@fracta/contract'
 import { db, newId } from './db'
 import type {
   ConsequenceTag,
@@ -16,6 +17,7 @@ import { checkEpisodeTriggers, checkHypothesisTriggers, type FlagCandidate } fro
 import { renderDocumentationExport } from './documentExport'
 import { buildInviteUrl, generateToken } from './qrPayload'
 import { buildReportInviteUrl } from './reportPayload'
+import { assembleFbaOutcomeBundle } from './fbaOutcomeBundle'
 
 export async function createParticipant(input: {
   identifyingDetails: string
@@ -30,8 +32,149 @@ export async function createParticipant(input: {
     consentAttestedAt: input.consentAttested ? new Date().toISOString() : null,
     consentAttestedBy: input.consentAttested ? input.practitionerName : null,
     createdAt: new Date().toISOString(),
+    // Recovered from claude/frame-phase-1-contract-qxzs36 — see
+    // participantContextImport.ts for how these get populated for real.
+    linkId: null,
+    planCycle: null,
+    knownBehaviourLabels: [],
   })
   return id
+}
+
+// Manual linkId entry — a fallback for correcting/entering a linkId by hand
+// alongside importParticipantContext below.
+export async function setParticipantLinkId(participantId: string, linkId: string | null) {
+  const participant = await db.participants.get(participantId)
+  if (!participant) throw new Error('Participant not found')
+  await db.participants.update(participantId, { linkId: linkId?.trim() || null })
+}
+
+export type ImportParticipantContextOutcome =
+  | { status: 'ok'; participantId: string; wasUpdate: boolean }
+  | { status: 'error'; reason: string }
+
+// Consumes a ParticipantContext file exported by Vector (contract A2).
+// Validated against the contract before anything is written. A linkId
+// already present locally updates that participant in place (plan cycle,
+// consent, suggested behaviour labels refresh); a new linkId creates a new
+// Frame participant. knownBehaviourLabels are stored for the "Add
+// behaviour" screen to offer as suggestions — never auto-created here.
+// Recovered from claude/frame-phase-1-contract-qxzs36.
+export async function importParticipantContext(
+  json: string,
+  practitionerName: string,
+): Promise<ImportParticipantContextOutcome> {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(json)
+  } catch {
+    return { status: 'error', reason: 'This file is not valid JSON.' }
+  }
+
+  const validation = validateParticipantContext(parsed)
+  if (!validation.ok) {
+    return { status: 'error', reason: `Not a valid ParticipantContext: ${validation.errors.join(' ')}` }
+  }
+  const context = parsed as ParticipantContext
+
+  const existing = (await db.participants.toArray()).find((p) => p.linkId === context.linkId)
+
+  if (existing) {
+    await db.participants.update(existing.id, {
+      planCycle: context.planCycle,
+      knownBehaviourLabels: context.knownBehaviourLabels,
+      consentAttested: context.consentAttested,
+      consentAttestedAt: context.consentAttestedAt,
+      consentAttestedBy: context.consentAttested ? practitionerName : existing.consentAttestedBy,
+    })
+    return { status: 'ok', participantId: existing.id, wasUpdate: true }
+  }
+
+  const id = newId()
+  await db.participants.add({
+    id,
+    // displayLabel (initials/alias), never full identifying details — this
+    // is exactly what crossed the boundary, so it's exactly what's shown
+    // locally too (contract A1/A2).
+    identifyingDetails: context.displayLabel,
+    consentAttested: context.consentAttested,
+    consentAttestedAt: context.consentAttestedAt,
+    consentAttestedBy: context.consentAttested ? practitionerName : null,
+    createdAt: new Date().toISOString(),
+    linkId: context.linkId,
+    planCycle: context.planCycle,
+    knownBehaviourLabels: context.knownBehaviourLabels,
+  })
+  return { status: 'ok', participantId: id, wasUpdate: false }
+}
+
+export type GenerateBundleOutcome = { status: 'ok'; exportId: string } | { status: 'blocked'; reason: string }
+
+// Assembles and stores an FbaOutcomeBundle as an immutable DocumentationExport
+// snapshot (contract A3) — the one-way Frame -> Vector handoff of assessment
+// output. Recovered from claude/frame-phase-1-contract-qxzs36, adapted to
+// read from FormulationRecord/scales.ts instead of the deleted
+// Formulation/escalationContent.ts this branch shipped against.
+export async function generateFbaOutcomeBundleExport(input: {
+  participantId: string
+  behaviourIds: string[]
+  generatedBy: string
+}): Promise<GenerateBundleOutcome> {
+  const participant = await db.participants.get(input.participantId)
+  if (!participant) throw new Error('Participant not found')
+
+  const behaviours = (
+    await Promise.all(input.behaviourIds.map((id) => db.behaviours.get(id)))
+  ).filter((b): b is NonNullable<typeof b> => b !== undefined)
+
+  const perBehaviour = await Promise.all(
+    behaviours.map(async (behaviour) => {
+      const [episodes, formulations, hypotheses, riskFlagsForBehaviour] = await Promise.all([
+        db.episodes.where('behaviourId').equals(behaviour.id).sortBy('dateTime'),
+        db.formulations.where('behaviourId').equals(behaviour.id).toArray(),
+        db.hypotheses.where('behaviourId').equals(behaviour.id).sortBy('computedAt'),
+        db.riskFlags.where('behaviourId').equals(behaviour.id).toArray(),
+      ])
+      return {
+        behaviour,
+        episodes,
+        formulations,
+        latestHypothesis: hypotheses.length ? hypotheses[hypotheses.length - 1] : null,
+        riskFlags: riskFlagsForBehaviour,
+      }
+    }),
+  )
+
+  const id = newId()
+  const assembled = assembleFbaOutcomeBundle({
+    participant,
+    generatedBy: input.generatedBy,
+    generatedAt: new Date().toISOString(),
+    sourceExportId: id,
+    behaviours: perBehaviour,
+  })
+  if (!assembled.ok) return { status: 'blocked', reason: assembled.error }
+
+  const validation = validateFbaOutcomeBundle(assembled.bundle)
+  if (!validation.ok) {
+    return { status: 'blocked', reason: `Bundle failed contract validation: ${validation.errors.join(' ')}` }
+  }
+  const leakedKeys = findDenylistedKeys(assembled.bundle)
+  if (leakedKeys.length > 0) {
+    return { status: 'blocked', reason: `Bundle contains disallowed identifying keys: ${leakedKeys.join(', ')}.` }
+  }
+
+  await db.documentationExports.add({
+    id,
+    participantId: input.participantId,
+    behaviourIds: input.behaviourIds,
+    generatedAt: assembled.bundle.generatedAt,
+    generatedBy: input.generatedBy,
+    format: 'fba_outcome_bundle',
+    contentSnapshot: JSON.stringify(assembled.bundle, null, 2),
+  })
+
+  return { status: 'ok', exportId: id }
 }
 
 export async function createBehaviour(input: {

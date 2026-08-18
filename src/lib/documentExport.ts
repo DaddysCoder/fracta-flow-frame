@@ -55,6 +55,11 @@ const FORMAT_TITLE: Record<DocumentationFormat, string> = {
   clinical_report: 'Clinical Report',
   plan_appendix: 'Behaviour Support Plan Appendix',
   staff_training_summary: 'Staff Training Summary',
+  // Never actually rendered through this HTML renderer — see
+  // actions.ts's generateFbaOutcomeBundleExport, which builds its
+  // contentSnapshot as JSON via fbaOutcomeBundle.ts instead. Present here
+  // only so this lookup stays total over DocumentationFormat.
+  fba_outcome_bundle: 'FBA Outcome Bundle',
 }
 
 function hypothesisSummary(h: FunctionHypothesis | null): string {
