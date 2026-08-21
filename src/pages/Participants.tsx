@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { db } from '../lib/db'
 import { createParticipant } from '../lib/actions'
 import { usePractitioner } from '../lib/practitioner'
+import { EmptyCard } from '../components/EmptyCard'
 
 export function Participants() {
   const participants = useLiveQuery(() => db.participants.orderBy('createdAt').reverse().toArray(), [])
@@ -74,11 +75,16 @@ export function Participants() {
         </form>
       )}
 
-      <ul className="divide-y divide-slate-200 dark:divide-slate-800 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-        {participants?.length === 0 && (
-          <li className="p-4 text-sm text-slate-500">No participants yet.</li>
-        )}
-        {participants?.map((p) => (
+      {participants?.length === 0 && !showForm && (
+        <EmptyCard
+          title="No participants yet"
+          body="This is a local caseload on this device. Add someone, then a behaviour, then you can jump straight to episode log or screener."
+        />
+      )}
+
+      {!!participants?.length && (
+      <ul className="divide-y divide-slate-200 dark:divide-slate-800 rounded-2xl border border-[#E5E5E5] dark:border-slate-800 bg-white dark:bg-slate-900">
+        {participants.map((p) => (
           <li key={p.id}>
             <Link to={`/participants/${p.id}`} className="block p-4 hover:bg-slate-50 dark:hover:bg-slate-800">
               <div className="font-medium text-[#111111] dark:text-white">{p.identifyingDetails}</div>
@@ -90,6 +96,7 @@ export function Participants() {
           </li>
         ))}
       </ul>
+      )}
     </div>
   )
 }

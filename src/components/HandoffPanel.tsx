@@ -265,6 +265,10 @@ function ScanImportSection({ behaviourId }: { behaviourId: string }) {
 export function HandoffPanel({ behaviourId }: { behaviourId: string }) {
   return (
     <div className="space-y-4">
+      <p className="text-xs text-slate-500">
+        This tab is for the function screener only. Episode capture from the floor is Field, on
+        the Episode log tab — same behaviour record.
+      </p>
       <GenerateInviteSection behaviourId={behaviourId} />
       <div>
         <h2 className="text-sm font-semibold text-[#111111] dark:text-white mb-2">Pending &amp; past invites</h2>

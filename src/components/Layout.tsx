@@ -29,7 +29,7 @@ export function Layout() {
       </header>
       <div className="flex-1 flex flex-col min-w-0">
         <BackupBanner />
-        <main className="max-w-4xl w-full mx-auto px-4 py-6 flex-1">
+        <main className="max-w-5xl w-full mx-auto px-4 py-6 flex-1">
           <Outlet />
         </main>
       </div>

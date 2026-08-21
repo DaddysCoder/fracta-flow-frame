@@ -1,4 +1,4 @@
-import { DOMAIN_LABELS } from './screener'
+import { DOMAIN_LABELS, domainItemCount } from './screener'
 import { SEVERITY_SCALE } from './scales'
 import type {
   Behaviour,
@@ -132,9 +132,10 @@ function screenersSection(screeners: FunctionScreener[]): string {
       (s) => `
     <table class="kv">
       <tr><th>Completed</th><td>${escapeHtml(fmtDateTime(s.dateCompleted))}</td></tr>
+      <tr><th>Instrument</th><td>${escapeHtml(s.instrumentName ?? 'Frame function screener')}</td></tr>
       <tr><th>Informant</th><td>${escapeHtml(s.informantRole)}</td></tr>
       <tr><th>Domain scores</th><td>${(['attention', 'escape', 'tangible', 'automatic'] as const)
-        .map((d) => `${DOMAIN_LABELS[d]}: ${s.domainScores[d]}/6`)
+        .map((d) => `${DOMAIN_LABELS[d]}: ${s.domainScores[d]}/${domainItemCount(s.rawResponses, d)}`)
         .join(', ')}</td></tr>
     </table>
   `,

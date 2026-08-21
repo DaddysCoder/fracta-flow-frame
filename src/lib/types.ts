@@ -49,6 +49,8 @@ export interface Episode {
   loggedBy: string
   riskFlags: RiskFlagItem[]
   createdAt: string
+  captureSource?: 'frame' | 'field'
+  fieldCaptureId?: string | null
 }
 
 export interface ScreenerResponse {
@@ -56,6 +58,8 @@ export interface ScreenerResponse {
   domain: ScreenerDomain
   answer: ScreenerAnswer
 }
+
+export type InstrumentSource = 'frame' | 'vector'
 
 export interface FunctionScreener {
   id: string
@@ -66,6 +70,19 @@ export interface FunctionScreener {
   rawResponses: ScreenerResponse[]
   domainScores: Record<ScreenerDomain, number>
   createdAt: string
+  instrumentSource?: InstrumentSource
+  instrumentName?: string
+  vectorInstrumentId?: string | null
+}
+
+export interface VectorInstrumentRecord {
+  id: string
+  sourceId: string
+  name: string
+  version: number
+  kind: 'function_screener'
+  items: { id: string; domain: ScreenerDomain; prompt: string }[]
+  importedAt: string
 }
 
 // FunctionDomain in the Phase 2 brief — reuses ScreenerDomain since
@@ -144,4 +161,16 @@ export interface ScreenerInvite {
   informantRole: string // e.g. "support worker", "parent", "sibling"
   createdAt: string // ISO string, not Date — consistent with the rest of this data model
   status: ScreenerInviteStatus
+}
+
+export type FieldInviteStatus = 'pending' | 'cancelled'
+
+export interface FieldInvite {
+  id: string
+  behaviourId: string
+  token: string
+  informantRole: string
+  createdAt: string
+  status: FieldInviteStatus
+  importedCaptureIds: string[]
 }

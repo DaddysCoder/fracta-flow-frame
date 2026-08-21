@@ -3,6 +3,7 @@ import type {
   AntecedentTag,
   ConsequenceTag,
   DocumentationFormat,
+  InstrumentSource,
   RiskFlagItem,
   ScreenerResponse,
 } from './types'
@@ -11,6 +12,8 @@ import { computeHypothesis, type ComputeOutcome } from './hypothesis'
 import { checkEpisodeTriggers, checkHypothesisTriggers, type FlagCandidate } from './riskFlags'
 import { renderDocumentationExport } from './documentExport'
 import { buildInviteUrl, generateToken } from './qrPayload'
+import { parseVectorInstrument, toInstrumentRecord } from './vectorInstrument'
+import { buildFieldInviteUrl, parseFieldCapture, type FieldEpisodeFields } from './fieldPayload'
 
 export async function createParticipant(input: {
   identifyingDetails: string
@@ -61,6 +64,8 @@ export async function createEpisode(input: {
   consequenceTag: ConsequenceTag
   riskFlags: RiskFlagItem[]
   loggedBy: string
+  captureSource?: 'frame' | 'field'
+  fieldCaptureId?: string | null
 }) {
   const id = newId()
   await db.episodes.add({
@@ -78,6 +83,8 @@ export async function createEpisode(input: {
     loggedBy: input.loggedBy,
     riskFlags: input.riskFlags,
     createdAt: new Date().toISOString(),
+    captureSource: input.captureSource ?? 'frame',
+    fieldCaptureId: input.fieldCaptureId ?? null,
   })
 
   // Fires immediately on save, not on next recompute (brief §3).
@@ -94,6 +101,9 @@ export async function createScreener(input: {
   informantId: string
   informantRole: string
   responses: ScreenerResponse[]
+  instrumentSource?: InstrumentSource
+  instrumentName?: string
+  vectorInstrumentId?: string | null
 }) {
   const id = newId()
   await db.screeners.add({
@@ -105,8 +115,32 @@ export async function createScreener(input: {
     rawResponses: input.responses,
     domainScores: scoreDomains(input.responses),
     createdAt: new Date().toISOString(),
+    instrumentSource: input.instrumentSource ?? 'frame',
+    instrumentName: input.instrumentName ?? 'Frame function screener',
+    vectorInstrumentId: input.vectorInstrumentId ?? null,
   })
   return id
+}
+
+export async function importVectorInstrumentJson(text: string) {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(text)
+  } catch {
+    throw new Error('This file is not valid JSON.')
+  }
+  const result = parseVectorInstrument(parsed)
+  if (!result.ok) throw new Error(result.error)
+  const existing = await db.vectorInstruments.where('sourceId').equals(result.payload.instrument.id).first()
+  const id = existing?.id ?? newId()
+  await db.vectorInstruments.put(
+    toInstrumentRecord(result.payload, id, new Date().toISOString()),
+  )
+  return { id, replaced: Boolean(existing), name: result.payload.instrument.name }
+}
+
+export async function deleteVectorInstrument(id: string) {
+  await db.vectorInstruments.delete(id)
 }
 
 // On-demand only (brief §3.5) — never called automatically from
@@ -302,9 +336,83 @@ export async function importScreenerResponse(input: {
       rawResponses: input.responses,
       domainScores: scoreDomains(input.responses),
       createdAt: new Date().toISOString(),
+      instrumentSource: 'frame',
+      instrumentName: 'Frame function screener',
+      vectorInstrumentId: null,
     })
     await db.screenerInvites.update(invite.id, { status: 'completed' })
 
     return { status: 'ok' as const, screenerId, behaviourId: invite.behaviourId }
+  })
+}
+
+export async function createFieldInvite(input: { behaviourId: string; informantRole: string }) {
+  const id = newId()
+  const token = generateToken()
+  await db.fieldInvites.add({
+    id,
+    behaviourId: input.behaviourId,
+    token,
+    informantRole: input.informantRole,
+    createdAt: new Date().toISOString(),
+    status: 'pending',
+    importedCaptureIds: [],
+  })
+  return { id, token, url: buildFieldInviteUrl(token, input.informantRole) }
+}
+
+export async function cancelFieldInvite(inviteId: string) {
+  const invite = await db.fieldInvites.get(inviteId)
+  if (!invite) throw new Error('Invite not found')
+  if (invite.status !== 'pending') throw new Error('Only pending Field invites can be cancelled')
+  await db.fieldInvites.update(inviteId, { status: 'cancelled' })
+}
+
+export type FieldImportOutcome =
+  | { status: 'ok'; episodeId: string; behaviourId: string }
+  | { status: 'not_found' }
+  | { status: 'already_used' }
+  | { status: 'cancelled' }
+
+export async function importFieldCaptureText(raw: string): Promise<FieldImportOutcome> {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(raw)
+  } catch {
+    throw new Error('This is not valid JSON.')
+  }
+  const decoded = parseFieldCapture(parsed)
+  if (!decoded.ok) throw new Error(decoded.error)
+  return importFieldCapture({
+    token: decoded.token,
+    captureId: decoded.captureId,
+    episode: decoded.episode,
+  })
+}
+
+export async function importFieldCapture(input: {
+  token: string
+  captureId: string
+  episode: FieldEpisodeFields
+}): Promise<FieldImportOutcome> {
+  return db.transaction('rw', [db.fieldInvites, db.episodes, db.riskFlags], async () => {
+    const invite = await db.fieldInvites.where('token').equals(input.token).first()
+    if (!invite) return { status: 'not_found' as const }
+    if (invite.status === 'cancelled') return { status: 'cancelled' as const }
+    if (invite.importedCaptureIds.includes(input.captureId)) return { status: 'already_used' as const }
+
+    const episodeId = await createEpisode({
+      behaviourId: invite.behaviourId,
+      ...input.episode,
+      loggedBy: `Field · ${invite.informantRole}`,
+      captureSource: 'field',
+      fieldCaptureId: input.captureId,
+    })
+
+    await db.fieldInvites.update(invite.id, {
+      importedCaptureIds: [...invite.importedCaptureIds, input.captureId],
+    })
+
+    return { status: 'ok' as const, episodeId, behaviourId: invite.behaviourId }
   })
 }

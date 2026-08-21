@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import QRCode from 'qrcode'
-import { SCREENER_ITEMS } from '../lib/screener'
+import { SCREENER_DISPLAY_ITEMS, SCREENER_ITEMS } from '../lib/screener'
 import { encodeResponsePayload } from '../lib/qrPayload'
 import type { ScreenerAnswer, ScreenerResponse } from '../lib/types'
 
@@ -108,7 +108,7 @@ export function InformantScreenerPage() {
         </div>
 
         <div className="space-y-3">
-          {SCREENER_ITEMS.map((item) => (
+          {SCREENER_DISPLAY_ITEMS.map((item) => (
             <div key={item.id} className="bg-white rounded-lg border border-slate-200 p-3 space-y-2">
               <p className="text-sm text-slate-800">{item.prompt}</p>
               <div className="flex gap-1">

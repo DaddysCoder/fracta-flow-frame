@@ -47,6 +47,27 @@ export const SCREENER_ITEMS: ScreenerItem[] = [
   { id: 'auto-6', domain: 'automatic', prompt: 'The person seems to engage in the behaviour for its own sensation rather than for a reaction or outcome.' },
 ]
 
+// Presentation order only. SCREENER_ITEMS stays grouped so QR payloads keep a
+// stable canonical index. Interleave so same-domain items never sit together.
+const DISPLAY_DOMAINS: ScreenerDomain[] = ['attention', 'escape', 'tangible', 'automatic']
+
+export function interleaveByDomain(items: ScreenerItem[]): ScreenerItem[] {
+  const byDomain = Object.fromEntries(
+    DISPLAY_DOMAINS.map((domain) => [domain, items.filter((item) => item.domain === domain)]),
+  ) as Record<ScreenerDomain, ScreenerItem[]>
+  const max = Math.max(0, ...DISPLAY_DOMAINS.map((domain) => byDomain[domain].length))
+  const interleaved: ScreenerItem[] = []
+  for (let i = 0; i < max; i++) {
+    for (const domain of DISPLAY_DOMAINS) {
+      const item = byDomain[domain][i]
+      if (item) interleaved.push(item)
+    }
+  }
+  return interleaved
+}
+
+export const SCREENER_DISPLAY_ITEMS: ScreenerItem[] = interleaveByDomain(SCREENER_ITEMS)
+
 const ANSWER_SCORE: Record<ScreenerAnswer, number> = { yes: 1, unsure: 0.5, no: 0 }
 
 export function scoreDomains(responses: ScreenerResponse[]): Record<ScreenerDomain, number> {
@@ -55,6 +76,11 @@ export function scoreDomains(responses: ScreenerResponse[]): Record<ScreenerDoma
     totals[r.domain] += ANSWER_SCORE[r.answer]
   }
   return totals
+}
+
+export function domainItemCount(responses: ScreenerResponse[], domain: ScreenerDomain): number {
+  const n = responses.filter((r) => r.domain === domain).length
+  return n > 0 ? n : 6
 }
 
 export const DOMAIN_LABELS: Record<ScreenerDomain, string> = {

@@ -1,7 +1,8 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../lib/db'
-import { DOMAIN_LABELS } from '../lib/screener'
+import { DOMAIN_LABELS, domainItemCount } from '../lib/screener'
 import type { ScreenerDomain } from '../lib/types'
+import { EmptyCard } from './EmptyCard'
 
 const DOMAINS: ScreenerDomain[] = ['attention', 'escape', 'tangible', 'automatic']
 
@@ -12,7 +13,12 @@ export function ScreenerList({ behaviourId }: { behaviourId: string }) {
   )
 
   if (!screeners?.length) {
-    return <p className="text-sm text-slate-500">No screeners completed yet.</p>
+    return (
+      <EmptyCard
+        title="No screeners yet"
+        body="Answer the mixed-item form above. Scores by function only appear after you save — not while you are answering."
+      />
+    )
   }
 
   return (
@@ -33,11 +39,13 @@ export function ScreenerList({ behaviourId }: { behaviourId: string }) {
                   {new Date(s.dateCompleted).toLocaleString()}
                 </span>
                 <span className="text-xs text-slate-500">
-                  Informant: {s.informantRole}
+                  {s.instrumentName ?? 'Frame function screener'} · {s.informantRole}
                 </span>
               </div>
               <div className="space-y-1">
-                {DOMAINS.map((d) => (
+                {DOMAINS.map((d) => {
+                  const ceiling = domainItemCount(s.rawResponses, d)
+                  return (
                   <div key={d} className="flex items-center gap-2 text-xs">
                     <span className="w-20 text-slate-500">{DOMAIN_LABELS[d]}</span>
                     <div className="flex-1 h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
@@ -45,12 +53,13 @@ export function ScreenerList({ behaviourId }: { behaviourId: string }) {
                         className={`h-full ${
                           s.domainScores[d] === maxScore && maxScore > 0 ? 'bg-[#111111] dark:bg-white' : 'bg-slate-400 dark:bg-slate-600'
                         }`}
-                        style={{ width: `${(s.domainScores[d] / 6) * 100}%` }}
+                        style={{ width: `${ceiling ? (s.domainScores[d] / ceiling) * 100 : 0}%` }}
                       />
                     </div>
-                    <span className="w-8 text-right text-slate-500">{s.domainScores[d]}/6</span>
+                    <span className="w-10 text-right text-slate-500">{s.domainScores[d]}/{ceiling}</span>
                   </div>
-                ))}
+                  )
+                })}
               </div>
               <p className="text-xs text-slate-400">
                 Screener result only — raw responses stored for audit, no cross-comparison to

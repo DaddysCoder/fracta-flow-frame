@@ -9,18 +9,20 @@ const REMINDER_INTERVAL_DAYS = 7
 // storage as permanent.
 
 export async function exportAllData(): Promise<void> {
-  const [practitioners, participants, behaviours, episodes, screeners] = await Promise.all([
+  const [practitioners, participants, behaviours, episodes, screeners, vectorInstruments, fieldInvites] = await Promise.all([
     db.practitioners.toArray(),
     db.participants.toArray(),
     db.behaviours.toArray(),
     db.episodes.toArray(),
     db.screeners.toArray(),
+    db.vectorInstruments.toArray(),
+    db.fieldInvites.toArray(),
   ])
 
   const payload = {
     exportedAt: new Date().toISOString(),
     format: 'fba-screener-backup-v1',
-    data: { practitioners, participants, behaviours, episodes, screeners },
+    data: { practitioners, participants, behaviours, episodes, screeners, vectorInstruments, fieldInvites },
   }
 
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
@@ -40,16 +42,18 @@ export async function importData(file: File): Promise<void> {
   if (parsed?.format !== 'fba-screener-backup-v1') {
     throw new Error('This file is not a recognised FBA Screener backup.')
   }
-  const { practitioners, participants, behaviours, episodes, screeners } = parsed.data
+  const { practitioners, participants, behaviours, episodes, screeners, vectorInstruments, fieldInvites } = parsed.data
   await db.transaction(
     'rw',
-    [db.practitioners, db.participants, db.behaviours, db.episodes, db.screeners],
+    [db.practitioners, db.participants, db.behaviours, db.episodes, db.screeners, db.vectorInstruments, db.fieldInvites],
     async () => {
       await db.practitioners.bulkPut(practitioners ?? [])
       await db.participants.bulkPut(participants ?? [])
       await db.behaviours.bulkPut(behaviours ?? [])
       await db.episodes.bulkPut(episodes ?? [])
       await db.screeners.bulkPut(screeners ?? [])
+      await db.vectorInstruments.bulkPut(vectorInstruments ?? [])
+      await db.fieldInvites.bulkPut(fieldInvites ?? [])
     },
   )
   localStorage.setItem(LAST_BACKUP_KEY, new Date().toISOString())

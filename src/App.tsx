@@ -7,6 +7,7 @@ import { ParticipantDetail } from './pages/ParticipantDetail'
 import { BehaviourDetail } from './pages/BehaviourDetail'
 import { Settings } from './pages/Settings'
 import { InformantScreenerPage } from './pages/InformantScreenerPage'
+import { FieldCapturePage } from './pages/FieldCapturePage'
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
             practitioner/participant data, and shows no navigation chrome
             tying it to clinical records. */}
         <Route path="/screener" element={<InformantScreenerPage />} />
+        <Route path="/field" element={<FieldCapturePage />} />
 
         <Route
           element={

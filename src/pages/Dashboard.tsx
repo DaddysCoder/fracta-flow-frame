@@ -2,25 +2,45 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { Link } from 'react-router-dom'
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { db } from '../lib/db'
+import { readLastWork } from '../lib/lastWork'
 import { DashboardFlagsBanner } from '../components/DashboardFlagsBanner'
+import { EmptyCard } from '../components/EmptyCard'
+import { WorkModeLinks } from '../components/WorkModeLinks'
 
 export function Dashboard() {
   const behaviours = useLiveQuery(() => db.behaviours.where('status').equals('active').toArray(), [])
   const participants = useLiveQuery(() => db.participants.toArray(), [])
   const episodes = useLiveQuery(() => db.episodes.toArray(), [])
+  const last = readLastWork()
 
   const participantById = new Map((participants ?? []).map((p) => [p.id, p]))
+  const lastBehaviour = last ? (behaviours ?? []).find((b) => b.id === last.behaviourId) : undefined
+  const lastParticipant = lastBehaviour ? participantById.get(lastBehaviour.participantId) : undefined
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-display font-bold text-[#111111] dark:text-white">Dashboard</h1>
+      <h1 className="text-xl font-display font-bold text-[#0B0B0C] dark:text-white">Dashboard</h1>
 
       <DashboardFlagsBanner />
 
+      {lastBehaviour && (
+        <div className="rounded-2xl border border-[#E5E5E5] dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#6B6B6B]">Continue</p>
+          <Link to={`/behaviours/${lastBehaviour.id}?tab=${last?.tab ?? 'episodes'}`} className="block mt-1">
+            <div className="font-medium text-[#0B0B0C] dark:text-white">{lastBehaviour.name}</div>
+            <div className="text-xs text-slate-500">{lastParticipant?.identifyingDetails}</div>
+          </Link>
+          <WorkModeLinks behaviourId={lastBehaviour.id} />
+        </div>
+      )}
+
       {behaviours?.length === 0 && (
-        <p className="text-sm text-slate-500">
-          No active behaviours yet. Add a participant and a behaviour to start logging.
-        </p>
+        <EmptyCard
+          title="Nothing on the caseload yet"
+          body="Add a participant, then a behaviour. Episode log, function screener, and triangulation live on that behaviour."
+          actionTo="/participants"
+          actionLabel="Add a participant"
+        />
       )}
 
       <div className="space-y-4">
@@ -36,20 +56,21 @@ export function Dashboard() {
           const participant = participantById.get(b.participantId)
 
           return (
-            <Link
+            <div
               key={b.id}
-              to={`/behaviours/${b.id}`}
-              className="block rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 hover:border-slate-400"
+              className="rounded-2xl border border-[#E5E5E5] dark:border-slate-800 bg-white dark:bg-slate-900 p-4"
             >
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium text-[#111111] dark:text-white">{b.name}</div>
-                  <div className="text-xs text-slate-500">{participant?.identifyingDetails}</div>
+              <Link to={`/behaviours/${b.id}`} className="block">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-[#0B0B0C] dark:text-white">{b.name}</div>
+                    <div className="text-xs text-slate-500">{participant?.identifyingDetails}</div>
+                  </div>
+                  <span className="text-xs text-slate-500">{behaviourEpisodes.length} episode(s)</span>
                 </div>
-                <span className="text-xs text-slate-500">{behaviourEpisodes.length} episode(s)</span>
-              </div>
+              </Link>
               {chartData.length > 1 ? (
-                <div className="h-32 mt-3">
+                <Link to={`/behaviours/${b.id}?tab=episodes`} className="block h-32 mt-3">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: -24 }}>
                       <XAxis dataKey="date" fontSize={10} tickLine={false} />
@@ -59,13 +80,12 @@ export function Dashboard() {
                       <Line type="monotone" dataKey="frequency" stroke="#2563eb" dot={false} name="Frequency" />
                     </LineChart>
                   </ResponsiveContainer>
-                </div>
+                </Link>
               ) : (
-                <p className="text-xs text-slate-400 mt-3">
-                  Log at least 2 episodes to see a trend chart.
-                </p>
+                <p className="text-xs text-slate-400 mt-3">Log at least 2 episodes to see a trend chart.</p>
               )}
-            </Link>
+              <WorkModeLinks behaviourId={b.id} />
+            </div>
           )
         })}
       </div>

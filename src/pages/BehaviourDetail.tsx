@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useEffect } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { db } from '../lib/db'
+import { rememberLastWork } from '../lib/lastWork'
+import { BEHAVIOUR_TABS, parseBehaviourTab } from '../lib/workModes'
 import { EpisodeForm } from '../components/EpisodeForm'
 import { EpisodeList } from '../components/EpisodeList'
 import { ScreenerForm } from '../components/ScreenerForm'
@@ -9,25 +11,35 @@ import { ScreenerList } from '../components/ScreenerList'
 import { HypothesisPanel } from '../components/HypothesisPanel'
 import { FlagsPanel } from '../components/FlagsPanel'
 import { HandoffPanel } from '../components/HandoffPanel'
-
-type Tab = 'episodes' | 'screener' | 'triangulation' | 'flags' | 'handoff'
-
-const TAB_LABEL: Record<Tab, string> = {
-  episodes: 'Episode log',
-  screener: 'Function screener',
-  triangulation: 'Triangulation',
-  flags: 'Flags',
-  handoff: 'Multi-informant',
-}
+import { FieldCapturePanel } from '../components/FieldCapturePanel'
+import { WorkModeBar } from '../components/WorkModeBar'
 
 export function BehaviourDetail() {
   const { behaviourId = '' } = useParams()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab = parseBehaviourTab(searchParams.get('tab'))
+  const openEpisodeId = searchParams.get('episode')
+
   const behaviour = useLiveQuery(() => db.behaviours.get(behaviourId), [behaviourId])
   const participant = useLiveQuery(
     () => (behaviour ? db.participants.get(behaviour.participantId) : undefined),
     [behaviour],
   )
-  const [tab, setTab] = useState<Tab>('episodes')
+
+  useEffect(() => {
+    if (behaviourId) rememberLastWork(behaviourId, tab)
+  }, [behaviourId, tab])
+
+  function setTab(next: (typeof BEHAVIOUR_TABS)[number]['id']) {
+    const nextParams: Record<string, string> = { tab: next }
+    setSearchParams(nextParams, { replace: true })
+  }
+
+  function setOpenEpisode(episodeId: string | null) {
+    const next: Record<string, string> = { tab: 'episodes' }
+    if (episodeId) next.episode = episodeId
+    setSearchParams(next, { replace: true })
+  }
 
   if (!behaviour) return <p className="text-sm text-slate-500">Loading…</p>
 
@@ -39,30 +51,25 @@ export function BehaviourDetail() {
             ← {participant.identifyingDetails}
           </Link>
         )}
-        <h1 className="text-xl font-display font-bold text-[#111111] dark:text-white mt-1">{behaviour.name}</h1>
+        <h1 className="text-xl font-display font-bold text-[#0B0B0C] dark:text-white mt-1">{behaviour.name}</h1>
         <p className="text-sm text-slate-500 mt-1">{behaviour.operationalDefinition}</p>
       </div>
 
-      <div className="flex gap-1 border-b border-slate-200 dark:border-slate-800">
-        {(['episodes', 'screener', 'triangulation', 'flags', 'handoff'] as Tab[]).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
-              tab === t
-                ? 'border-[#111111] dark:border-white text-[#111111] dark:text-white'
-                : 'border-transparent text-slate-500'
-            }`}
-          >
-            {TAB_LABEL[t]}
-          </button>
-        ))}
-      </div>
+      <WorkModeBar
+        items={BEHAVIOUR_TABS.map((t) => ({ id: t.id, label: t.label }))}
+        value={tab}
+        onChange={setTab}
+      />
 
       {tab === 'episodes' && (
         <div className="space-y-6">
           <EpisodeForm behaviourId={behaviourId} />
-          <EpisodeList behaviourId={behaviourId} />
+          <FieldCapturePanel behaviourId={behaviourId} />
+          <EpisodeList
+            behaviourId={behaviourId}
+            openEpisodeId={openEpisodeId}
+            onOpen={setOpenEpisode}
+          />
         </div>
       )}
 

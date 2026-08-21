@@ -4,9 +4,17 @@ import { Link, useParams } from 'react-router-dom'
 import { db } from '../lib/db'
 import { createBehaviour } from '../lib/actions'
 import { usePractitioner } from '../lib/practitioner'
+import { EmptyCard } from '../components/EmptyCard'
 import { ExportPanel } from '../components/ExportPanel'
+import { WorkModeBar } from '../components/WorkModeBar'
+import { WorkModeLinks } from '../components/WorkModeLinks'
 
 type Section = 'behaviours' | 'documentation'
+
+const SECTIONS: { id: Section; label: string }[] = [
+  { id: 'behaviours', label: 'Behaviours' },
+  { id: 'documentation', label: 'Documentation' },
+]
 
 export function ParticipantDetail() {
   const { participantId = '' } = useParams()
@@ -49,21 +57,7 @@ export function ParticipantDetail() {
         </h1>
       </div>
 
-      <div className="flex gap-1 border-b border-slate-200 dark:border-slate-800">
-        {(['behaviours', 'documentation'] as Section[]).map((s) => (
-          <button
-            key={s}
-            onClick={() => setSection(s)}
-            className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
-              section === s
-                ? 'border-[#111111] dark:border-white text-[#111111] dark:text-white'
-                : 'border-transparent text-slate-500'
-            }`}
-          >
-            {s === 'behaviours' ? 'Behaviours' : 'Documentation'}
-          </button>
-        ))}
-      </div>
+      <WorkModeBar items={SECTIONS} value={section} onChange={setSection} />
 
       {section === 'documentation' && <ExportPanel participantId={participantId} />}
 
@@ -111,19 +105,26 @@ export function ParticipantDetail() {
             </form>
           )}
 
-          <ul className="divide-y divide-slate-200 dark:divide-slate-800 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-            {behaviours?.length === 0 && (
-              <li className="p-4 text-sm text-slate-500">No behaviours logged yet.</li>
-            )}
-            {behaviours?.map((b) => (
-              <li key={b.id}>
-                <Link to={`/behaviours/${b.id}`} className="block p-4 hover:bg-slate-50 dark:hover:bg-slate-800">
-                  <div className="font-medium text-[#111111] dark:text-white">{b.name}</div>
-                  <div className="text-xs text-slate-500 line-clamp-1">{b.operationalDefinition}</div>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          {behaviours?.length === 0 && (
+            <EmptyCard
+              title="No behaviours yet"
+              body="Name the behaviour and write an operational definition. Then you can log episodes and run the function screener."
+            />
+          )}
+
+          {!!behaviours?.length && (
+            <ul className="divide-y divide-slate-200 dark:divide-slate-800 rounded-2xl border border-[#E5E5E5] dark:border-slate-800 bg-white dark:bg-slate-900">
+              {behaviours.map((b) => (
+                <li key={b.id} className="p-4">
+                  <Link to={`/behaviours/${b.id}`} className="block">
+                    <div className="font-medium text-[#0B0B0C] dark:text-white">{b.name}</div>
+                    <div className="text-xs text-slate-500 line-clamp-1">{b.operationalDefinition}</div>
+                  </Link>
+                  <WorkModeLinks behaviourId={b.id} />
+                </li>
+              ))}
+            </ul>
+          )}
         </>
       )}
     </div>

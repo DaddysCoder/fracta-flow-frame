@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../lib/db'
+import { EmptyCard } from './EmptyCard'
 import { acknowledgeFlag, escalateFlagToEfa, resolveFlag } from '../lib/actions'
 import { usePractitioner } from '../lib/practitioner'
 import type { RiskFlag, RiskFlagStatus } from '../lib/types'
@@ -118,7 +119,12 @@ export function FlagsPanel({ behaviourId }: { behaviourId: string }) {
   )
 
   if (!flags?.length) {
-    return <p className="text-sm text-slate-500">No flags have been raised for this behaviour.</p>
+    return (
+      <EmptyCard
+        title="No flags yet"
+        body="Flags appear when an episode or triangulation raises risk. They stay on this behaviour until you acknowledge or resolve them."
+      />
+    )
   }
 
   return (
