@@ -1,41 +1,30 @@
-# Fracta Flow — Behaviour Support, by Primitive AI
+# Frame by WhatBit — Behaviour Support
 
 A behaviour support practitioner tool combining structured behaviour/episode
 (ABC) logging with a FAST-structured function-of-behaviour screener — local-first,
 decision support only. **Phase 1 (MVP) + Phase 2 (triangulation) + Phase 3
 (escalation & documentation) + Phase 4 (multi-informant QR handoff)** of the
-phased build described in the coding brief, under the Fracta Flow product
-brand (Primitive AI is the parent company).
+phased build described in the coding brief, under the Frame product brand
+(WhatBit is the parent company).
 
 ### Brand identity
 
-Uses the real Fracta Flow brand kit v2 assets (`public/brand/`): the
-chevron-mark + wordmark lockup (`fracta-flow-lockup-color.svg` /
-`-white.svg` for dark backgrounds), sized favicons, brand purple `#7B2FF7`,
-ink `#111111`, off-white surface `#F5F5F5`, neutral border `#E5E5E5`, muted
-text `#6B6B6B`, Montserrat 700 for page titles, and Nunito for body/UI text
-(self-hosted via `@fontsource`, latin subset only, to keep the local-first
-PWA's precached payload small).
+Uses Frame by WhatBit chrome (`public/brand/`): the purple chevron mark,
+`FRAME` + `by WhatBit` lockup, sized favicons, accent purple `#7B2FF7`,
+ink `#0B0B0C`, off-white surface `#F5F5F5`, neutral border `#E5E5E5`, muted
+text `#6B6B6B`, Montserrat 700 for page titles and the wordmark, and Nunito
+for body/UI text (self-hosted via `@fontsource`, latin subset only, to keep
+the local-first PWA's precached payload small).
 
-Per the kit's own "one accent, used sparingly" rule — explicitly warning
-against "purple buttons, links, icons, and borders everywhere" — brand
-purple is confined to the logo mark only. This is a deliberate call for a
-list-heavy data app: several UI screens (the flags panel, pending invites)
-render repeated action buttons in a list, where making every one purple
-would violate the kit's own restraint principle immediately. Buttons use
-flat ink fills instead, consistent with the kit's flat-outline-or-fill
-guidance minus the multi-purple-element failure mode.
+Accent purple is used on chrome (wordmark Bit, icon, pill nav, first-use
+continue) rather than on every list action button — those stay ink fills
+so a data-heavy UI does not turn into a wall of purple.
 
-`src/components/Wordmark.tsx` renders the real lockup SVGs directly (no
-typographic reproduction needed this time — an earlier, incomplete
-"Primitive AI" wordmark guideline doc was superseded by this full kit,
-which shipped real files). The informant-facing `/screener` page
-deliberately carries no wordmark — the brief requires it to show no chrome
-tying it to clinical records at all. Marketing-site assets from the kit
-(hero art, feature blocks, pricing/testimonial cards, 404/empty-state
-illustrations) were left out — this is an in-app product, not a landing
-page, so only the identity elements (logo, favicons, color, type) were
-pulled in.
+`src/components/Wordmark.tsx` renders the chevron + typographic lockup.
+The informant-facing `/screener` page deliberately carries no wordmark —
+the brief requires it to show no chrome tying it to clinical records at all.
+Marketing-site assets (hero art, feature blocks, pricing/testimonial cards)
+were left out — this is an in-app product, not a landing page.
 
 ## What this is (and isn't)
 
@@ -206,3 +195,16 @@ npm test         # vitest unit tests (triangulation, risk flags, QR payload/hand
 Stack: Vite + React + TypeScript, Tailwind CSS, Dexie (IndexedDB),
 react-router-dom, recharts, vite-plugin-pwa, qrcode, jsqr, vitest
 (jsdom + fake-indexeddb for DB-backed tests).
+
+## Deploy (Cloudflare Workers)
+
+Live app: https://screen-fba.polina-67d.workers.dev/
+
+```bash
+npm run build
+npx wrangler deploy
+```
+
+`wrangler.jsonc` publishes the `dist/` SPA as worker `screen-fba`. You need
+to be logged in (`npx wrangler login`) on the same Cloudflare account that
+owns `polina-67d`.

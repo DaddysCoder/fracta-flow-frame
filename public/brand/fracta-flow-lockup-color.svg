@@ -1,10 +1,11 @@
 <svg width="520" height="180" viewBox="0 0 520 180" xmlns="http://www.w3.org/2000/svg" role="img">
-  <title>Fracta Flow logo lockup — full color</title>
+  <title>Frame by WhatBit logo lockup — full color</title>
   <g fill="#7B2FF7">
     <polygon points="60,58 112,58 131,80 79,80"/>
     <polygon points="60,58 79,80 79,102 60,80"/>
     <polygon points="60,96 104,96 123,118 79,118"/>
     <polygon points="60,96 79,118 79,140 60,118"/>
   </g>
-  <text x="145" y="120" font-family="Montserrat, sans-serif" font-weight="700" font-size="44" letter-spacing="1" fill="#111111">FRACTA<tspan font-family="Nunito, sans-serif" font-weight="400" dx="12">FLOW</tspan></text>
+  <text x="145" y="108" font-family="Montserrat, sans-serif" font-weight="700" font-size="44" letter-spacing="4" fill="#0B0B0C">FRAME</text>
+  <text x="145" y="138" font-family="Nunito, sans-serif" font-weight="600" font-size="18" fill="#6B6B6B">by What<tspan fill="#7B2FF7">Bit</tspan></text>
 </svg>

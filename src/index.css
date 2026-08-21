@@ -6,12 +6,14 @@
 @import '@fontsource/nunito/latin-700.css';
 @import '@fontsource/montserrat/latin-700.css';
 
-/* Fracta Flow brand kit §4/§7: Nunito for body/UI, Montserrat 700 reserved
-   for page titles/section headers/the wordmark — used sparingly, not the
-   whole UI, per the kit's own "typography carries hierarchy" principle. */
+/* WhatBit chrome: Nunito for body/UI, Montserrat 700 for page titles and
+   the FRAME wordmark. Accent is confined to chrome (mark, Bit, pill nav). */
 @theme {
   --font-sans: 'Nunito', system-ui, 'Segoe UI', Roboto, sans-serif;
   --font-display: 'Montserrat', system-ui, sans-serif;
+  --color-ink: #0B0B0C;
+  --color-accent: #7B2FF7;
+  --color-muted: #6B6B6B;
 }
 
 :root {

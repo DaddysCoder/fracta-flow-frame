@@ -1,6 +1,6 @@
-# Handoff Brief — FBA Screener (Primitive AI)
+# Handoff Brief — Frame by WhatBit (FBA Screener)
 
-Repo: https://github.com/DaddysCoder/fba-screener
+Repo: https://github.com/DaddysCoder/fracta-flow-frame
 Live: https://screen-fba.polina-67d.workers.dev/
 Purpose of this document: onboard a new coding agent (Gemini CLI, Claude Code, or similar) to continue this build with full context, without needing the original planning conversation.
 
@@ -33,7 +33,7 @@ Vite + React + TypeScript + Tailwind + Dexie (IndexedDB), offline-capable PWA. Q
 
 **Phase 4 (multi-informant QR handoff):** two-QR mechanism — invite QR carries only a token + informant role (no clinical/behaviour detail, verified no leakage), opens a standalone `/screener` route (no install, no IndexedDB, no nav chrome) for the informant, response renders as a second on-screen QR the practitioner scans back (camera or manual paste). Correlated via a random token, no backend. Response payload solved structurally (24-char answer-code string against the screener's fixed item order, ~78 bytes) rather than needing to trim audit detail. Explicit unit-tested error states (token not found/used/cancelled), transactional duplicate-scan rejection. 41 unit tests passing, full Playwright round-trip verified across two browser contexts.
 
-**Brand identity applied:** wordmark + ink/magenta/paper palette, magenta confined to the wordmark's "e" only. No actual SVG asset supplied yet — currently a documented typographic fallback (flagged in code/README). Note: this uses the parent "Primitive AI" identity, not the softer sub-brand direction that was being explored separately and never finalised (naming exploration is a separate, unrelated workstream — don't block on it).
+**Brand identity applied:** Frame by WhatBit — `FRAME` wordmark, WhatBit parent lockup (`What` ink / `Bit` accent `#7B2FF7`), ink `#0B0B0C`, muted `#6B6B6B`, Montserrat + Nunito. Accent is used on chrome (sidebar/pill nav, mark), not on every clinical action button.
 
 ## 5. Pending work (in rough priority order)
 

@@ -13,11 +13,11 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'apple-touch-icon.svg', 'brand/*.svg'],
       manifest: {
-        name: 'Fracta Flow — Behaviour Support, by Primitive AI',
-        short_name: 'Fracta Flow',
+        name: 'Frame by WhatBit — Behaviour Support',
+        short_name: 'Frame',
         description:
           'Behaviour support intake, descriptive data, and function screener — local-first, decision support only.',
-        theme_color: '#111111',
+        theme_color: '#0B0B0C',
         background_color: '#FFFFFF',
         display: 'standalone',
         start_url: '/',
