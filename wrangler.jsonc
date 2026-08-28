@@ -1,5 +1,5 @@
 {
-  "name": "frame",
+  "name": "screen-fba",
   "compatibility_date": "2026-08-13",
   "main": "worker/index.ts",
   "routes": [
