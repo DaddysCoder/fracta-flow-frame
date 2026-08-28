@@ -5,6 +5,9 @@ import jsQR from 'jsqr'
 import { db } from '../lib/db'
 import { cancelScreenerInvite, createScreenerInvite, importScreenerResponse } from '../lib/actions'
 import { decodeResponsePayload } from '../lib/qrPayload'
+import { useEntitlement } from '../context/AuthContext'
+import { canUseProFeature } from '../../shared/entitlement'
+import { ProBadge, ProGate } from './ProGate'
 
 const ROLE_OPTIONS = ['Support worker', 'Parent', 'Sibling', 'Teacher', 'Other']
 
@@ -263,12 +266,19 @@ function ScanImportSection({ behaviourId }: { behaviourId: string }) {
 }
 
 export function HandoffPanel({ behaviourId }: { behaviourId: string }) {
+  const entitlement = useEntitlement()
+  const allowed = canUseProFeature('multi_informant_qr', entitlement)
+
   return (
+    <ProGate allowed={allowed} feature="Multi-informant QR screener">
     <div className="space-y-4">
-      <p className="text-xs text-slate-500">
-        This tab is for the function screener only. Episode capture from the floor is Field, on
-        the Episode log tab — same behaviour record.
-      </p>
+      <div className="flex items-center gap-2">
+        <p className="text-xs text-slate-500 flex-1">
+          This tab is for the function screener only. Episode capture from the floor is Field, on
+          the Episode log tab — same behaviour record.
+        </p>
+        {!allowed && <ProBadge />}
+      </div>
       <GenerateInviteSection behaviourId={behaviourId} />
       <div>
         <h2 className="text-sm font-semibold text-[#111111] dark:text-white mb-2">Pending &amp; past invites</h2>
@@ -276,5 +286,6 @@ export function HandoffPanel({ behaviourId }: { behaviourId: string }) {
       </div>
       <ScanImportSection behaviourId={behaviourId} />
     </div>
+    </ProGate>
   )
 }

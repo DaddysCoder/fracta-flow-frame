@@ -77,7 +77,51 @@ export function TermsPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-[#0B0B0C] dark:text-white">5. Acceptable use</h2>
+        <h2 className="text-base font-semibold text-[#0B0B0C] dark:text-white">
+          5. Frame Free and Frame Pro
+        </h2>
+        <p>
+          Frame Free (A$0) requires no account and includes core clinical workflow features with up to
+          two active participants. Frame Pro (A$29/month or A$290/year) requires an account and
+          includes additional features such as unlimited participants, multi-informant tools,
+          documentation generation, and Vector import.
+        </p>
+        <p>
+          We may offer a 14-day Frame Pro trial after successful email verification, without requiring
+          a payment card. One trial per email address. Trial and subscription entitlements are stored on
+          our servers and follow your account — clearing browser data does not restart a trial.
+        </p>
+        <p>
+          When a trial or subscription ends, your account may remain valid and all local clinical
+          records remain on your device and accessible. Entitlement reverts to Frame Free limits for
+          new actions only (for example, creating additional participants beyond the free limit).
+          We do not delete or hide existing participant records, risk flags, episode data, behaviour
+          definitions, hypothesis results, or JSON backups on downgrade.
+        </p>
+        <p>
+          Frame Pro follows your account. Participant records do not automatically sync between
+          devices. Use Frame Backup to move records between browsers or devices.
+        </p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-base font-semibold text-[#0B0B0C] dark:text-white">
+          6. Accounts, billing, and Stripe
+        </h2>
+        <p>
+          Optional accounts use passwordless email one-time codes. Subscriptions and payment methods
+          are processed by Stripe Pty Ltd (or its affiliates). We do not store full card numbers on
+          our servers. Billing is managed via Stripe-hosted Checkout and the Stripe Customer Portal.
+        </p>
+        <p>
+          Subscription status is determined server-side from Stripe webhooks — not from browser
+          redirects alone. You are responsible for keeping your email address current for billing
+          correspondence.
+        </p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-base font-semibold text-[#0B0B0C] dark:text-white">7. Acceptable use</h2>
         <p>You must not:</p>
         <ul className="list-disc pl-5 space-y-1">
           <li>represent Frame outputs as a definitive functional analysis, diagnosis, or validated assessment;</li>
@@ -89,7 +133,7 @@ export function TermsPage() {
 
       <section className="space-y-3">
         <h2 className="text-base font-semibold text-[#0B0B0C] dark:text-white">
-          6. Intellectual property
+          8. Intellectual property
         </h2>
         <p>
           Frame software, branding, and documentation are owned by or licensed to {LEGAL_OPERATOR}.
@@ -100,19 +144,20 @@ export function TermsPage() {
 
       <section className="space-y-3">
         <h2 className="text-base font-semibold text-[#0B0B0C] dark:text-white">
-          7. Beta disclaimer
+          9. Pre-launch disclaimer
         </h2>
         <p>
-          Frame is offered as a public beta. Features may change, break, or be withdrawn. We provide
-          Frame on an &ldquo;as is&rdquo; and &ldquo;as available&rdquo; basis without warranties of
-          any kind, whether express or implied, including fitness for a particular purpose or
-          non-infringement, to the maximum extent permitted by law.
+          Frame is pre-launch until merged, configured, deployed, and live-tested in production.
+          Features may change, break, or be withdrawn. We provide Frame on an &ldquo;as is&rdquo; and
+          &ldquo;as available&rdquo; basis without warranties of any kind, whether express or implied,
+          including fitness for a particular purpose or non-infringement, to the maximum extent
+          permitted by law.
         </p>
       </section>
 
       <section className="space-y-3">
         <h2 className="text-base font-semibold text-[#0B0B0C] dark:text-white">
-          8. Limitation of liability
+          10. Limitation of liability
         </h2>
         <p>
           To the maximum extent permitted by law, {LEGAL_OPERATOR} and its directors, employees, and
@@ -128,7 +173,7 @@ export function TermsPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-[#0B0B0C] dark:text-white">9. Changes</h2>
+        <h2 className="text-base font-semibold text-[#0B0B0C] dark:text-white">11. Changes</h2>
         <p>
           We may update these Terms from time to time. Material changes will be reflected by an updated
           effective date and version. Continued use after changes take effect requires renewed acceptance
@@ -137,7 +182,7 @@ export function TermsPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-[#0B0B0C] dark:text-white">10. Governing law</h2>
+        <h2 className="text-base font-semibold text-[#0B0B0C] dark:text-white">12. Governing law</h2>
         <p>
           These Terms are governed by the laws of {LEGAL_JURISDICTION}. You submit to the non-exclusive
           jurisdiction of the courts of New South Wales, Australia.
@@ -145,7 +190,7 @@ export function TermsPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-[#0B0B0C] dark:text-white">11. Contact</h2>
+        <h2 className="text-base font-semibold text-[#0B0B0C] dark:text-white">13. Contact</h2>
         <p>
           Questions about these Terms:{' '}
           <a

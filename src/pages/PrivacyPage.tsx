@@ -36,8 +36,9 @@ export function PrivacyPage() {
         <p>
           Frame is built local-first. Participant profiles, behavioural records, screeners, episodes,
           exports, and practitioner profile data are stored in your browser on your device (IndexedDB)
-          unless you explicitly export a backup file. We do not operate cloud participant storage or
-          user accounts as part of Frame public beta.
+          unless you explicitly export a backup file. Participant clinical records are not stored in
+          our central database. Optional Frame Pro accounts store email, authentication, trial, and
+          billing metadata only — not your caseload.
         </p>
         <p>
           Because your caseload stays on your device, you — not {LEGAL_OPERATOR} — are the primary
@@ -68,20 +69,44 @@ export function PrivacyPage() {
 
       <section className="space-y-3">
         <h2 className="text-base font-semibold text-[#0B0B0C] dark:text-white">
-          4. What we do not collect
+          4. Account, authentication, and billing data (Cloudflare D1)
         </h2>
-        <p>Frame public beta does not include:</p>
+        <p>If you choose to sign in for Frame Pro trial or subscription, we store on our servers:</p>
         <ul className="list-disc pl-5 space-y-1">
-          <li>analytics, advertising, or behavioural tracking pixels;</li>
-          <li>central storage of participant or episode data;</li>
-          <li>billing or payment processing;</li>
-          <li>AI processing of your caseload on our servers.</li>
+          <li>your normalized email address and email verification timestamp;</li>
+          <li>hashed one-time sign-in codes and session tokens (not plaintext);</li>
+          <li>Pro trial start and end dates (one trial per email);</li>
+          <li>Stripe customer and subscription identifiers and status returned by Stripe webhooks.</li>
         </ul>
+        <p>
+          This data lives in a Cloudflare D1 database for account and billing purposes only. It does
+          not include participant names, episodes, screeners, or other clinical content.
+        </p>
+        <p>
+          Sign-in codes are sent by transactional email. OTPs expire quickly, are single-use, and are
+          rate-limited. Clearing browser data does not reset server-side trial eligibility.
+        </p>
       </section>
 
       <section className="space-y-3">
         <h2 className="text-base font-semibold text-[#0B0B0C] dark:text-white">
-          5. Hosting and technical logs
+          5. What we do not collect
+        </h2>
+        <p>Frame does not include:</p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>analytics, advertising, or behavioural tracking pixels;</li>
+          <li>central storage or automatic cloud sync of participant or episode data;</li>
+          <li>AI processing of your caseload on our servers.</li>
+        </ul>
+        <p>
+          Payment card details are collected and stored by Stripe, not by Frame. See Stripe&apos;s
+          privacy policy for how they handle payment information.
+        </p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-base font-semibold text-[#0B0B0C] dark:text-white">
+          6. Hosting and technical logs
         </h2>
         <p>
           We serve Frame as a static web application (for example via Cloudflare). When you load the
@@ -96,7 +121,7 @@ export function PrivacyPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-[#0B0B0C] dark:text-white">6. Email contact</h2>
+        <h2 className="text-base font-semibold text-[#0B0B0C] dark:text-white">7. Email contact</h2>
         <p>
           If you email us at {LEGAL_CONTACT_EMAIL}, we use your email address and message content only
           to respond. We do not sell personal information.
@@ -104,7 +129,7 @@ export function PrivacyPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-[#0B0B0C] dark:text-white">7. Backups you create</h2>
+        <h2 className="text-base font-semibold text-[#0B0B0C] dark:text-white">8. Backups you create</h2>
         <p>
           JSON backup files you export contain your full local database snapshot. You are responsible
           for securing backup files on whatever storage or channels you use (email, cloud drive, USB,
@@ -113,7 +138,7 @@ export function PrivacyPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-[#0B0B0C] dark:text-white">8. Children</h2>
+        <h2 className="text-base font-semibold text-[#0B0B0C] dark:text-white">9. Children</h2>
         <p>
           Frame is intended for qualified practitioners working in professional behaviour support
           contexts. It is not directed at children for self-service use.
@@ -121,7 +146,7 @@ export function PrivacyPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-[#0B0B0C] dark:text-white">9. Changes</h2>
+        <h2 className="text-base font-semibold text-[#0B0B0C] dark:text-white">10. Changes</h2>
         <p>
           We may update this Privacy Policy. Material changes will be reflected by an updated effective
           date and version. Where the app implements a version gate, you may be asked to acknowledge
@@ -130,7 +155,7 @@ export function PrivacyPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-[#0B0B0C] dark:text-white">10. Governing law</h2>
+        <h2 className="text-base font-semibold text-[#0B0B0C] dark:text-white">11. Governing law</h2>
         <p>
           This policy is governed by the laws of {LEGAL_JURISDICTION}, subject to mandatory privacy
           laws that apply to you in your own professional capacity.
@@ -138,7 +163,7 @@ export function PrivacyPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-[#0B0B0C] dark:text-white">11. Contact</h2>
+        <h2 className="text-base font-semibold text-[#0B0B0C] dark:text-white">12. Contact</h2>
         <p>
           Privacy questions:{' '}
           <a

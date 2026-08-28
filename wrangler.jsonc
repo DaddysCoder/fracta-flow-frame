@@ -1,12 +1,7 @@
 {
-  // Cloudflare deploy config for this static Vite/PWA build — no server-side
-  // Worker code, just the built `dist/` assets. "single-page-application"
-  // fallback is required because routing is client-side (react-router's
-  // BrowserRouter): without it, a hard refresh or shared link to a route
-  // like /participants/:id or /behaviours/:id would 404 instead of being
-  // served index.html and resolved client-side.
   "name": "frame",
   "compatibility_date": "2026-08-13",
+  "main": "worker/index.ts",
   "routes": [
     {
       "pattern": "frame.whatbit.dev",
@@ -15,8 +10,17 @@
   ],
   "assets": {
     "directory": "./dist",
-    "not_found_handling": "single-page-application"
+    "not_found_handling": "single-page-application",
+    "binding": "ASSETS"
   },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "frame-auth",
+      "database_id": "00000000-0000-0000-0000-000000000001",
+      "migrations_dir": "migrations"
+    }
+  ],
   "observability": {
     "enabled": false,
     "head_sampling_rate": 1,

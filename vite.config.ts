@@ -36,6 +36,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/lib/testSetup.ts'],
+    include: ['src/**/*.test.ts', 'shared/**/*.test.ts', 'worker/**/*.test.ts'],
   },
 })
 

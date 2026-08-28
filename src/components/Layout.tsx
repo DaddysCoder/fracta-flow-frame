@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { BackupBanner } from './BackupBanner'
+import { EntitlementBanner } from './EntitlementBanner'
 import { Wordmark } from './Wordmark'
 
 const navItem =
@@ -21,6 +22,9 @@ export function Layout() {
             <NavLink to="/settings" className={navItem}>
               Settings
             </NavLink>
+            <NavLink to="/pricing" className={navItem}>
+              Pricing
+            </NavLink>
           </nav>
         </div>
         <p className="hidden md:block mt-auto px-4 pb-4 text-[11px] text-[#6B6B6B]">
@@ -28,6 +32,7 @@ export function Layout() {
         </p>
       </header>
       <div className="flex-1 flex flex-col min-w-0">
+        <EntitlementBanner />
         <BackupBanner />
         <main className="max-w-5xl w-full mx-auto px-4 py-6 flex-1">
           <Outlet />

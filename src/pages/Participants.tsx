@@ -5,17 +5,28 @@ import { db } from '../lib/db'
 import { createParticipant } from '../lib/actions'
 import { usePractitioner } from '../lib/practitioner'
 import { EmptyCard } from '../components/EmptyCard'
+import { useEntitlement } from '../context/AuthContext'
+import { canCreateParticipant, PARTICIPANT_LIMIT_MESSAGE } from '../../shared/entitlement'
 
 export function Participants() {
   const participants = useLiveQuery(() => db.participants.orderBy('createdAt').reverse().toArray(), [])
   const practitioner = usePractitioner()
+  const entitlement = useEntitlement()
   const [identifyingDetails, setIdentifyingDetails] = useState('')
   const [consent, setConsent] = useState(false)
   const [showForm, setShowForm] = useState(false)
+  const [limitMessage, setLimitMessage] = useState<string | null>(null)
+
+  const participantCount = participants?.length ?? 0
+  const allowNewParticipant = canCreateParticipant(participantCount, entitlement)
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!practitioner) return
+    if (!allowNewParticipant) {
+      setLimitMessage(PARTICIPANT_LIMIT_MESSAGE)
+      return
+    }
     await createParticipant({
       identifyingDetails,
       consentAttested: consent,
@@ -31,12 +42,29 @@ export function Participants() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-display font-bold text-[#111111] dark:text-white">Participants</h1>
         <button
-          onClick={() => setShowForm((v) => !v)}
+          onClick={() => {
+            if (!allowNewParticipant) {
+              setLimitMessage(PARTICIPANT_LIMIT_MESSAGE)
+              setShowForm(false)
+              return
+            }
+            setLimitMessage(null)
+            setShowForm((v) => !v)
+          }}
           className="rounded-md bg-[#111111] dark:bg-white text-white dark:text-slate-900 px-3 py-1.5 text-sm font-medium"
         >
           {showForm ? 'Cancel' : 'Add participant'}
         </button>
       </div>
+
+      {limitMessage && (
+        <p className="text-sm text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+          {limitMessage}{' '}
+          <Link to="/pricing" className="text-[#E8542E] font-medium underline">
+            View Frame Pro
+          </Link>
+        </p>
+      )}
 
       {showForm && (
         <form onSubmit={handleSubmit} className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">
