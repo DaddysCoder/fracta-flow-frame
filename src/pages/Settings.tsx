@@ -8,9 +8,13 @@ import { deleteVectorInstrument, importVectorInstrumentJson } from '../lib/actio
 import { exampleVectorInstrument } from '../lib/vectorInstrument'
 import { WHATBIT_FAMILY } from '../lib/whatbitFamily'
 import { LEGAL_EFFECTIVE_LABEL } from '../lib/legal'
+import { useAuth } from '../context/AuthContext'
+import { canUseProFeature, NO_CLOUD_SYNC_MESSAGE } from '../../shared/entitlement'
+import { ProBadge, ProGate } from '../components/ProGate'
 
 export function Settings() {
   const practitioner = usePractitioner()
+  const { user, entitlement } = useAuth()
   const [name, setName] = useState('')
   const [role, setRole] = useState('')
   const [importError, setImportError] = useState<string | null>(null)
@@ -51,6 +55,11 @@ export function Settings() {
   async function handleVectorImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    if (!canUseProFeature('vector_import', entitlement)) {
+      setVectorError('Vector import requires Frame Pro.')
+      e.target.value = ''
+      return
+    }
     setVectorError(null)
     setVectorOk(null)
     try {
@@ -143,6 +152,24 @@ export function Settings() {
       </section>
 
       <section className="rounded-2xl border border-[#E5E5E5] dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">
+        <h2 className="text-sm font-semibold text-[#0B0B0C] dark:text-white">Frame Pro &amp; billing</h2>
+        <p className="text-sm text-slate-500">
+          {user
+            ? `Signed in as ${user.email} · ${entitlement === 'pro' ? 'Frame Pro' : entitlement === 'trial' ? 'Pro trial' : 'Frame Free (account)'}`
+            : 'Frame Free needs no account. Sign in for a Pro trial or subscription.'}
+        </p>
+        <p className="text-sm text-slate-500">{NO_CLOUD_SYNC_MESSAGE}</p>
+        <div className="flex flex-wrap gap-3">
+          <Link to="/pricing" className="rounded-md border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-200">
+            Pricing
+          </Link>
+          <Link to="/billing" className="rounded-md bg-[#E8542E] text-white px-3 py-1.5 text-sm font-medium">
+            {user ? 'Billing' : 'Sign in'}
+          </Link>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-[#E5E5E5] dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">
         <h2 className="text-sm font-semibold text-[#0B0B0C] dark:text-white">Legal &amp; privacy</h2>
         <p className="text-sm text-slate-500">
           Frame is decision support only. Terms version: {LEGAL_EFFECTIVE_LABEL}.
@@ -186,7 +213,11 @@ export function Settings() {
       </section>
 
       <section className="rounded-2xl border border-[#E5E5E5] dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">
-        <h2 className="text-sm font-semibold text-[#0B0B0C] dark:text-white">Vector instruments</h2>
+        <ProGate allowed={canUseProFeature('vector_import', entitlement)} feature="Vector instrument import">
+        <div className="flex items-center gap-2">
+          <h2 className="text-sm font-semibold text-[#0B0B0C] dark:text-white">Vector instruments</h2>
+          {!canUseProFeature('vector_import', entitlement) && <ProBadge />}
+        </div>
         <p className="text-sm text-slate-500">
           Import a <code className="text-xs">whatbit-vector-instrument-v1</code> file. Frame runs
           it on a behaviour. Same Vector id replaces the previous version. QR handoff is still
@@ -228,6 +259,7 @@ export function Settings() {
             ))}
           </ul>
         )}
+        </ProGate>
       </section>
     </div>
   )

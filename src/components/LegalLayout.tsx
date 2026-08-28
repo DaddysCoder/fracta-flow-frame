@@ -35,6 +35,12 @@ export function LegalLayout({
             >
               About
             </Link>
+            <Link
+              to="/pricing"
+              className="text-[#6B6B6B] hover:text-[#E8542E] dark:text-slate-400 dark:hover:text-[#F07655]"
+            >
+              Pricing
+            </Link>
           </nav>
         </div>
       </header>

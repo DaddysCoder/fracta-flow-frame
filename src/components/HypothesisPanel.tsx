@@ -4,6 +4,9 @@ import { db } from '../lib/db'
 import { recomputeHypothesis } from '../lib/actions'
 import { DOMAIN_LABELS } from '../lib/screener'
 import type { AgreementStatus, ConfidenceLevel } from '../lib/types'
+import { useEntitlement } from '../context/AuthContext'
+import { canUseProFeature } from '../../shared/entitlement'
+import { ProBadge, ProGate } from './ProGate'
 
 const AGREEMENT_LABEL: Record<AgreementStatus, string> = {
   match: 'Match',
@@ -29,6 +32,7 @@ const CAVEAT =
   'Even a full match between screener and observed pattern is not equivalent to confirmation via experimental functional analysis. This is a hypothesis for your clinical judgement, not a determination of function.'
 
 export function HypothesisPanel({ behaviourId }: { behaviourId: string }) {
+  const entitlement = useEntitlement()
   const screenerCount = useLiveQuery(
     () => db.screeners.where('behaviourId').equals(behaviourId).count(),
     [behaviourId],
@@ -50,7 +54,11 @@ export function HypothesisPanel({ behaviourId }: { behaviourId: string }) {
   const [blockedReason, setBlockedReason] = useState<string | null>(null)
   const [showReceipts, setShowReceipts] = useState(false)
 
+  const multiInformant = (screenerCount ?? 0) > 1
+  const multiComparisonAllowed = canUseProFeature('multi_informant_comparison', entitlement)
+
   async function handleRecompute() {
+    if (multiInformant && !multiComparisonAllowed) return
     setPending(true)
     const outcome = await recomputeHypothesis(behaviourId)
     setBlockedReason(outcome.status === 'blocked' ? outcome.reason : null)
@@ -77,10 +85,24 @@ export function HypothesisPanel({ behaviourId }: { behaviourId: string }) {
         </p>
       )}
 
+      {multiInformant && (
+        <ProGate
+          allowed={multiComparisonAllowed}
+          feature="Multiple-informant evidence comparison"
+        >
+          <div className="rounded-md border border-purple-200 bg-purple-50 dark:bg-purple-950 dark:border-purple-800 p-3 text-sm text-purple-900 dark:text-purple-100 flex items-center gap-2">
+            <span>
+              {screenerCount} completed screeners — comparison uses all informant responses together.
+            </span>
+            {!multiComparisonAllowed && <ProBadge />}
+          </div>
+        </ProGate>
+      )}
+
       <div className="flex items-center gap-3">
         <button
           onClick={handleRecompute}
-          disabled={pending || screenerCount === 0}
+          disabled={pending || screenerCount === 0 || (multiInformant && !multiComparisonAllowed)}
           className="rounded-md bg-[#111111] dark:bg-white text-white dark:text-slate-900 px-4 py-2 text-sm font-medium disabled:opacity-50"
         >
           {pending ? 'Computing…' : 'Recompute hypothesis'}
@@ -103,11 +125,12 @@ export function HypothesisPanel({ behaviourId }: { behaviourId: string }) {
             <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-1 text-sm font-medium text-slate-700 dark:text-slate-300">
               {CONFIDENCE_LABEL[latest.confidenceLevel]}
             </span>
-            {latest.screenerDisagreement && (
+            {latest.screenerDisagreement && multiComparisonAllowed && (
               <span className="rounded-full bg-purple-100 dark:bg-purple-950 text-purple-900 dark:text-purple-200 px-3 py-1 text-sm font-medium">
                 Screeners disagree
               </span>
             )}
+            {latest.screenerDisagreement && !multiComparisonAllowed && <ProBadge />}
           </div>
 
           <dl className="grid grid-cols-2 gap-2 text-sm">

@@ -1,6 +1,6 @@
 // Legal document versions — bump when terms or privacy copy changes materially.
-export const LEGAL_VERSION = '2026-08-28'
-export const LEGAL_EFFECTIVE_LABEL = '28 August 2026'
+export const LEGAL_VERSION = '2026-08-28-commercial'
+export const LEGAL_EFFECTIVE_LABEL = '28 August 2026 (commercial access)'
 
 export const LEGAL_OPERATOR = 'Primitive AI Labs PTY Limited'
 export const LEGAL_BRAND = 'WhatBit'

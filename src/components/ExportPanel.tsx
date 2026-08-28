@@ -4,6 +4,9 @@ import { db } from '../lib/db'
 import { generateDocumentationExport } from '../lib/actions'
 import { usePractitioner } from '../lib/practitioner'
 import type { DocumentationFormat } from '../lib/types'
+import { useEntitlement } from '../context/AuthContext'
+import { canUseProFeature } from '../../shared/entitlement'
+import { ProBadge, ProGate } from './ProGate'
 
 const FORMAT_OPTIONS: { value: DocumentationFormat; label: string; hint: string }[] = [
   {
@@ -41,6 +44,7 @@ export function ExportPanel({ participantId }: { participantId: string }) {
     [participantId],
   )
   const practitioner = usePractitioner()
+  const entitlement = useEntitlement()
 
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [format, setFormat] = useState<DocumentationFormat>('clinical_report')
@@ -57,6 +61,13 @@ export function ExportPanel({ participantId }: { participantId: string }) {
 
   async function handleGenerate() {
     if (!practitioner || selected.size === 0) return
+    const feature =
+      format === 'clinical_report'
+        ? 'clinical_report'
+        : format === 'plan_appendix'
+          ? 'plan_appendix'
+          : 'staff_training_summary'
+    if (!canUseProFeature(feature, entitlement)) return
     setGenerating(true)
     try {
       const id = await generateDocumentationExport({
@@ -74,8 +85,12 @@ export function ExportPanel({ participantId }: { participantId: string }) {
 
   return (
     <div className="space-y-4">
+      <ProGate allowed={canUseProFeature('clinical_report', entitlement)} feature="Documentation generation">
       <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">
-        <h2 className="text-sm font-semibold text-[#111111] dark:text-white">Generate documentation</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-sm font-semibold text-[#111111] dark:text-white">Generate documentation</h2>
+          {!canUseProFeature('clinical_report', entitlement) && <ProBadge />}
+        </div>
 
         <div>
           <span className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
@@ -123,6 +138,7 @@ export function ExportPanel({ participantId }: { participantId: string }) {
           Opens as print-friendly HTML in a new tab — use your browser's print-to-PDF to save it.
         </p>
       </div>
+      </ProGate>
 
       <div>
         <h2 className="text-sm font-semibold text-[#111111] dark:text-white mb-2">Past exports</h2>
