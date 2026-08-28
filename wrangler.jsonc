@@ -17,7 +17,7 @@
     {
       "binding": "DB",
       "database_name": "frame-auth",
-      "database_id": "00000000-0000-0000-0000-000000000001",
+      "database_id": "d8d1f54e-f635-4cea-a9d6-00d70c1004c7",
       "migrations_dir": "migrations"
     }
   ],
