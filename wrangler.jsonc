@@ -27,7 +27,7 @@
     "FRAME_PUBLIC_ORIGIN": "https://frame.whatbit.dev"
   },
   "observability": {
-    "enabled": false,
+    "enabled": true,
     "head_sampling_rate": 1,
     "redact_query_string": true,
     "logs": {
