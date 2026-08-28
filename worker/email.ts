@@ -25,9 +25,11 @@ export async function sendOtpEmail(env: Env, email: string, code: string): Promi
     headers: {
       Authorization: `Bearer ${env.RESEND_API_KEY}`,
       'Content-Type': 'application/json',
+      'User-Agent': 'Frame/1.0 (+https://frame.whatbit.dev)',
     },
     body: JSON.stringify({
-      from: 'Frame <hello@frame.whatbit.dev>',
+      from: 'Frame <login@whatbit.dev>',
+      reply_to: 'hello@primitiveai.com.au',
       to: [email],
       subject,
       text,
@@ -35,7 +37,8 @@ export async function sendOtpEmail(env: Env, email: string, code: string): Promi
   })
 
   if (!res.ok) {
-    console.error('[frame-auth] OTP email failed', res.status)
+    const errorBody = await res.text().catch(() => '')
+    console.error('[frame-auth] OTP email failed', res.status, errorBody.slice(0, 500))
     throw new Error('Unable to send sign-in email right now.')
   }
 }
