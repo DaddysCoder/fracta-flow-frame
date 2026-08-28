@@ -11,7 +11,10 @@ import {
 
 function stripeClient(env: Env): Stripe | null {
   if (!env.STRIPE_SECRET_KEY) return null
-  return new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2025-02-24.acacia' })
+  return new Stripe(env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-02-24.acacia',
+    httpClient: Stripe.createFetchHttpClient(),
+  })
 }
 
 function priceIdForPlan(env: Env, plan: string): string | null {
@@ -53,33 +56,41 @@ async function createCheckout(request: Request, env: Env): Promise<Response> {
   const priceId = priceIdForPlan(env, body.plan ?? '')
   if (!priceId) return errorResponse('Invalid plan', 400)
 
-  const origin = publicOrigin(env, request)
-  const billing = await getBillingForUser(env.DB, user.id)
-  let customerId = billing?.stripe_customer_id
+  try {
+    const origin = publicOrigin(env, request)
+    const billing = await getBillingForUser(env.DB, user.id)
+    let customerId = billing?.stripe_customer_id
 
-  if (!customerId) {
-    const customer = await stripe.customers.create({ email: user.email, metadata: { frame_user_id: user.id } })
-    customerId = customer.id
-    await env.DB.prepare(
-      `INSERT INTO billing_customers (user_id, stripe_customer_id, stripe_subscription_id, stripe_price_id, status, current_period_end, cancel_at_period_end, updated_at)
-       VALUES (?, ?, NULL, NULL, NULL, NULL, 0, ?)
-       ON CONFLICT(user_id) DO UPDATE SET stripe_customer_id = excluded.stripe_customer_id, updated_at = excluded.updated_at`,
+    if (!customerId) {
+      const customer = await stripe.customers.create({ email: user.email, metadata: { frame_user_id: user.id } })
+      customerId = customer.id
+      await env.DB.prepare(
+        `INSERT INTO billing_customers (user_id, stripe_customer_id, stripe_subscription_id, stripe_price_id, status, current_period_end, cancel_at_period_end, updated_at)
+         VALUES (?, ?, NULL, NULL, NULL, NULL, 0, ?)
+         ON CONFLICT(user_id) DO UPDATE SET stripe_customer_id = excluded.stripe_customer_id, updated_at = excluded.updated_at`,
+      )
+        .bind(user.id, customerId, new Date().toISOString())
+        .run()
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      customer: customerId,
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${origin}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/billing`,
+      client_reference_id: user.id,
+      metadata: { frame_user_id: user.id },
+    })
+
+    return json({ url: session.url })
+  } catch (error) {
+    console.error(
+      '[frame-billing] checkout create failed',
+      error instanceof Error ? error.message : String(error),
     )
-      .bind(user.id, customerId, new Date().toISOString())
-      .run()
+    return errorResponse('Could not start Checkout', 502)
   }
-
-  const session = await stripe.checkout.sessions.create({
-    mode: 'subscription',
-    customer: customerId,
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${origin}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${origin}/billing`,
-    client_reference_id: user.id,
-    metadata: { frame_user_id: user.id },
-  })
-
-  return json({ url: session.url })
 }
 
 async function createPortal(request: Request, env: Env): Promise<Response> {
@@ -94,13 +105,21 @@ async function createPortal(request: Request, env: Env): Promise<Response> {
     return errorResponse('No billing account yet', 400)
   }
 
-  const origin = publicOrigin(env, request)
-  const portal = await stripe.billingPortal.sessions.create({
-    customer: billing.stripe_customer_id,
-    return_url: `${origin}/billing`,
-  })
+  try {
+    const origin = publicOrigin(env, request)
+    const portal = await stripe.billingPortal.sessions.create({
+      customer: billing.stripe_customer_id,
+      return_url: `${origin}/billing`,
+    })
 
-  return json({ url: portal.url })
+    return json({ url: portal.url })
+  } catch (error) {
+    console.error(
+      '[frame-billing] portal create failed',
+      error instanceof Error ? error.message : String(error),
+    )
+    return errorResponse('Could not open billing portal', 502)
+  }
 }
 
 async function billingStatus(request: Request, env: Env): Promise<Response> {
@@ -120,8 +139,18 @@ export async function handleStripeWebhook(request: Request, env: Env): Promise<R
   const body = await request.text()
   let event: Stripe.Event
   try {
-    event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
-  } catch {
+    event = await stripe.webhooks.constructEventAsync(
+      body,
+      signature,
+      webhookSecret,
+      undefined,
+      Stripe.createSubtleCryptoProvider(),
+    )
+  } catch (error) {
+    console.error(
+      '[frame-billing] webhook signature verification failed',
+      error instanceof Error ? error.message : String(error),
+    )
     return errorResponse('Invalid webhook signature', 400)
   }
 
@@ -149,8 +178,12 @@ export async function handleStripeWebhook(request: Request, env: Env): Promise<R
       default:
         break
     }
-  } catch {
-    console.error('[frame-billing] webhook handler error', event.type)
+  } catch (error) {
+    console.error(
+      '[frame-billing] webhook handler error',
+      event.type,
+      error instanceof Error ? error.message : String(error),
+    )
     return errorResponse('Webhook handler failed', 500)
   }
 
