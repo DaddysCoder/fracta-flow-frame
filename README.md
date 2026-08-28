@@ -200,11 +200,85 @@ react-router-dom, recharts, vite-plugin-pwa, qrcode, jsqr, vitest
 
 Live app: https://frame.whatbit.dev/
 
+Frame uses a **Worker script + static assets** deployment (not assets-only).
+`wrangler.jsonc` sets `main` to `worker/index.ts` for `/api/*` (auth, billing,
+Stripe webhooks, D1) and an `assets` block for the Vite SPA in `dist/`. You
+must redeploy after pulling billing changes — an older assets-only deploy
+cannot accept secrets or variables in the Cloudflare dashboard.
+
+### One-time setup
+
+1. Log in: `npx wrangler login`
+2. Create the D1 database (if you have not already):
+
+   ```bash
+   npx wrangler d1 create frame-auth
+   ```
+
+   Copy the returned `database_id` into `wrangler.jsonc` under
+   `d1_databases[0].database_id` (replace the placeholder UUID).
+3. Apply migrations to production D1:
+
+   ```bash
+   npm run db:migrate:remote
+   ```
+
+4. Set **secrets** (encrypted; not stored in git). Run each command and paste
+   the value when prompted:
+
+   ```bash
+   npx wrangler secret put STRIPE_SECRET_KEY
+   npx wrangler secret put STRIPE_WEBHOOK_SECRET
+   npx wrangler secret put FRAME_STRIPE_MONTHLY_PRICE_ID
+   npx wrangler secret put FRAME_STRIPE_ANNUAL_PRICE_ID
+   npx wrangler secret put FRAME_SESSION_SECRET
+   npx wrangler secret put RESEND_API_KEY
+   ```
+
+   Optional non-secret var (can also go in dashboard **Settings → Variables**):
+
+   ```bash
+   npx wrangler secret put FRAME_PUBLIC_ORIGIN
+   # value: https://frame.whatbit.dev
+   ```
+
+   `FRAME_STRIPE_MONTHLY_PRICE_ID` and `FRAME_STRIPE_ANNUAL_PRICE_ID` are your
+   live Stripe Price IDs (e.g. `price_…`), not product IDs.
+
+5. In the [Stripe Dashboard](https://dashboard.stripe.com/webhooks), add a webhook
+   endpoint:
+
+   - URL: `https://frame.whatbit.dev/api/webhooks/stripe`
+   - Events: `checkout.session.completed`, `customer.subscription.updated`,
+     `customer.subscription.deleted`
+   - Copy the signing secret into `STRIPE_WEBHOOK_SECRET`.
+
+### Deploy
+
+Builds the SPA (`dist/`) and deploys the Worker (Wrangler bundles
+`worker/index.ts` at deploy time — no separate worker build step):
+
+```bash
+npm run deploy
+```
+
+Or manually:
+
 ```bash
 npm run build
 npx wrangler deploy
 ```
 
-`wrangler.jsonc` publishes the `dist/` SPA as worker `screen-fba`. You need
-to be logged in (`npx wrangler login`) on the same Cloudflare account that
-owns `polina-67d`.
+Local full-stack dev (API + assets):
+
+```bash
+npm run build && npx wrangler dev
+```
+
+Copy `.dev.vars.example` to `.dev.vars` for local secrets.
+
+After deploy, confirm in Cloudflare dashboard → **Workers & Pages → frame →
+Settings → Variables and Secrets** that secrets appear. If the dashboard still
+shows “Variables cannot be added to a Worker that only has static assets”, the
+live Worker was not redeployed with `main` set — run `npm run deploy` again
+from a checkout that includes `worker/index.ts` in `wrangler.jsonc`.

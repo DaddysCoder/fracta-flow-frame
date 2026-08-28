@@ -1,6 +1,8 @@
 {
+  "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "frame",
   "compatibility_date": "2026-08-13",
+  "compatibility_flags": ["nodejs_compat_v2"],
   "main": "worker/index.ts",
   "routes": [
     {

@@ -7,10 +7,12 @@
     "dev": "vite",
     "dev:worker": "wrangler dev",
     "build": "tsc -b && vite build",
+    "deploy": "npm run build && wrangler deploy",
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
-    "db:migrate:local": "wrangler d1 migrations apply frame-auth --local"
+    "db:migrate:local": "wrangler d1 migrations apply frame-auth --local",
+    "db:migrate:remote": "wrangler d1 migrations apply frame-auth --remote"
   },
   "dependencies": {
     "@fontsource/montserrat": "^5.3.0",
