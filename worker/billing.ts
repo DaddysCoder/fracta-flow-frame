@@ -80,15 +80,22 @@ async function createCheckout(request: Request, env: Env): Promise<Response> {
         .run()
     }
 
-    const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',
-      customer: customerId,
-      line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${origin}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/billing`,
-      client_reference_id: user.id,
-      metadata: { frame_user_id: user.id },
-    })
+    const session = await stripe.checkout.sessions.create(
+      {
+        mode: 'subscription',
+        customer: customerId,
+        line_items: [{ price: priceId, quantity: 1 }],
+        success_url: `${origin}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${origin}/billing`,
+        client_reference_id: user.id,
+        metadata: { frame_user_id: user.id },
+      },
+      {
+        // Managed Payments requires Basil (2025-03-31) or newer. Keep the rest
+        // of Frame's Stripe integration pinned to Acacia for a minimal rollout.
+        apiVersion: '2025-03-31.basil',
+      },
+    )
 
     return json({ url: session.url })
   } catch (error) {
