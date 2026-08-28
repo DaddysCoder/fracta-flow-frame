@@ -21,6 +21,11 @@
       "migrations_dir": "migrations"
     }
   ],
+  "vars": {
+    "FRAME_STRIPE_MONTHLY_PRICE_ID": "price_1U9KzoFIXid8q5wwOlHFMUAV",
+    "FRAME_STRIPE_ANNUAL_PRICE_ID": "price_1U9KzwFIXid8q5wwQKJUcwHH",
+    "FRAME_PUBLIC_ORIGIN": "https://frame.whatbit.dev"
+  },
   "observability": {
     "enabled": false,
     "head_sampling_rate": 1,
