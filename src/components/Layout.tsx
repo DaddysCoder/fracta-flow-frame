@@ -3,7 +3,7 @@ import { BackupBanner } from './BackupBanner'
 import { Wordmark } from './Wordmark'
 
 const navItem =
-  'px-3.5 py-2 rounded-full text-sm font-semibold text-[#6B6B6B] hover:bg-[#7B2FF7]/10 hover:text-[#7B2FF7] aria-[current=page]:bg-[#7B2FF7] aria-[current=page]:text-white dark:text-slate-300 dark:hover:bg-[#7B2FF7]/20 dark:aria-[current=page]:bg-[#7B2FF7] dark:aria-[current=page]:text-white'
+  'px-3.5 py-2 rounded-full text-sm font-semibold text-[#6B6B6B] hover:bg-[#E8542E]/10 hover:text-[#E8542E] aria-[current=page]:bg-[#E8542E] aria-[current=page]:text-white dark:text-slate-300 dark:hover:bg-[#E8542E]/20 dark:aria-[current=page]:bg-[#E8542E] dark:aria-[current=page]:text-white'
 
 export function Layout() {
   return (

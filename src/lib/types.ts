@@ -11,6 +11,10 @@ export interface Practitioner {
   name: string
   role: string
   disclaimerAcknowledgedAt: string | null
+  termsAcceptedAt: string | null
+  termsVersion: string | null
+  privacyAcknowledgedAt: string | null
+  privacyVersion: string | null
 }
 
 export interface Participant {

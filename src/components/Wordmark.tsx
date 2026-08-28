@@ -22,7 +22,7 @@ export function Wordmark({ className = '', height = 32 }: { className?: string; 
           FRAME
         </span>
         <span className="block text-[11px] font-medium text-[#6B6B6B]">
-          by What<span className="text-[#7B2FF7]">Bit</span>
+          by What<span className="text-[#E8542E]">Bit</span>
         </span>
       </span>
     </span>

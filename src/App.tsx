@@ -8,11 +8,19 @@ import { BehaviourDetail } from './pages/BehaviourDetail'
 import { Settings } from './pages/Settings'
 import { InformantScreenerPage } from './pages/InformantScreenerPage'
 import { FieldCapturePage } from './pages/FieldCapturePage'
+import { TermsPage } from './pages/TermsPage'
+import { PrivacyPage } from './pages/PrivacyPage'
+import { AboutPage } from './pages/AboutPage'
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Public legal pages — no practitioner gate, direct navigation. */}
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/about" element={<AboutPage />} />
+
         {/* Informant-facing route (brief §4, Phase 4): deliberately outside
             DisclaimerGate and Layout. It never touches IndexedDB or any
             practitioner/participant data, and shows no navigation chrome

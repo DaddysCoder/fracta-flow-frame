@@ -1,4 +1,5 @@
 import { type FormEvent, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { usePractitioner, saveProfile } from '../lib/practitioner'
 import { exportAllData, getLastBackupAt, importData } from '../lib/backup'
@@ -6,6 +7,7 @@ import { db } from '../lib/db'
 import { deleteVectorInstrument, importVectorInstrumentJson } from '../lib/actions'
 import { exampleVectorInstrument } from '../lib/vectorInstrument'
 import { WHATBIT_FAMILY } from '../lib/whatbitFamily'
+import { LEGAL_EFFECTIVE_LABEL } from '../lib/legal'
 
 export function Settings() {
   const practitioner = usePractitioner()
@@ -111,9 +113,15 @@ export function Settings() {
       <section className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">
         <h2 className="text-sm font-semibold text-[#111111] dark:text-white">Data &amp; backup</h2>
         <p className="text-sm text-slate-500">
-          All data is stored only in this browser (IndexedDB). Nothing is sent to a server.
-          Browser storage can be cleared by the OS (especially iOS Safari) — export a backup
-          regularly and before switching devices or browsers.
+          All participant and clinical workflow data is stored only in this browser (IndexedDB).
+          Nothing is sent to a Frame server. You are the custodian of that data and of any JSON
+          backups you create.
+        </p>
+        <p className="text-sm text-slate-500">
+          Browser storage is not permanent — iOS Safari and other browsers can clear it without
+          warning when storage is low, after long idle periods, or when you switch devices.
+          Export a backup before closing a session on a shared device, before OS or browser updates,
+          and at least weekly during active casework.
         </p>
         <p className="text-xs text-slate-400">
           Last backup: {lastBackup ? lastBackup.toLocaleString() : 'never'}
@@ -132,6 +140,30 @@ export function Settings() {
         </div>
         {importOk && <p className="text-sm text-green-600">Backup imported.</p>}
         {importError && <p className="text-sm text-red-600">{importError}</p>}
+      </section>
+
+      <section className="rounded-2xl border border-[#E5E5E5] dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">
+        <h2 className="text-sm font-semibold text-[#0B0B0C] dark:text-white">Legal &amp; privacy</h2>
+        <p className="text-sm text-slate-500">
+          Frame is decision support only. Terms version: {LEGAL_EFFECTIVE_LABEL}.
+        </p>
+        <ul className="space-y-2 text-sm">
+          <li>
+            <Link to="/terms" className="text-[#E8542E] hover:text-[#F07655] font-medium">
+              Terms of Use
+            </Link>
+          </li>
+          <li>
+            <Link to="/privacy" className="text-[#E8542E] hover:text-[#F07655] font-medium">
+              Privacy Policy
+            </Link>
+          </li>
+          <li>
+            <Link to="/about" className="text-[#E8542E] hover:text-[#F07655] font-medium">
+              About Frame
+            </Link>
+          </li>
+        </ul>
       </section>
 
       <section className="rounded-2xl border border-[#E5E5E5] dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3">

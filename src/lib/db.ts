@@ -51,6 +51,10 @@ class FbaDatabase extends Dexie {
     this.version(6).stores({
       fieldInvites: 'id, behaviourId, token, status, createdAt',
     })
+    // v7: practitioner legal acceptance fields (termsAcceptedAt, termsVersion,
+    // privacyAcknowledgedAt, privacyVersion) — stored on the object, no index
+    // change. Existing records keep prior disclaimer only; gate re-shows once.
+    this.version(7).stores({})
   }
 }
 

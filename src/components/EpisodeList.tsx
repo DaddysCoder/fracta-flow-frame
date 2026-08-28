@@ -46,7 +46,7 @@ export function EpisodeList({
                 </span>
                 <span className="flex items-center gap-1.5 shrink-0">
                   {ep.captureSource === 'field' && (
-                    <span className="text-[10px] font-semibold uppercase tracking-wide rounded-full bg-[#7B2FF7]/15 text-[#7B2FF7] px-2 py-0.5">
+                    <span className="text-[10px] font-semibold uppercase tracking-wide rounded-full bg-[#E8542E]/15 text-[#E8542E] px-2 py-0.5">
                       Field
                     </span>
                   )}

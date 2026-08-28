@@ -198,7 +198,7 @@ react-router-dom, recharts, vite-plugin-pwa, qrcode, jsqr, vitest
 
 ## Deploy (Cloudflare Workers)
 
-Live app: https://screen-fba.polina-67d.workers.dev/
+Live app: https://frame.whatbit.dev/
 
 ```bash
 npm run build
