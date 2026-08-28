@@ -23,6 +23,13 @@ function priceIdForPlan(env: Env, plan: string): string | null {
   return null
 }
 
+function safeStripeError(error: unknown): string {
+  const detail = error instanceof Error ? error.message : String(error)
+  return detail
+    .replace(/\b(?:sk|rk)_(?:live|test)_[A-Za-z0-9_]+\b/g, '[redacted]')
+    .slice(0, 300)
+}
+
 export async function handleBillingRequest(request: Request, env: Env, path: string): Promise<Response | null> {
   if (!path.startsWith('/api/billing')) return null
 
@@ -85,11 +92,9 @@ async function createCheckout(request: Request, env: Env): Promise<Response> {
 
     return json({ url: session.url })
   } catch (error) {
-    console.error(
-      '[frame-billing] checkout create failed',
-      error instanceof Error ? error.message : String(error),
-    )
-    return errorResponse('Could not start Checkout', 502)
+    const detail = safeStripeError(error)
+    console.error('[frame-billing] checkout create failed', detail)
+    return errorResponse(`Could not start Checkout: ${detail}`, 502)
   }
 }
 
