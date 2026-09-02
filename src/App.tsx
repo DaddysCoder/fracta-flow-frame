@@ -3,6 +3,18 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { DisclaimerGate } from './components/DisclaimerGate'
 import { Layout } from './components/Layout'
 
+function RouteLoadingFallback() {
+  return (
+    <div className="flex h-screen w-full items-center justify-center">
+      <div
+        className="h-8 w-8 animate-spin rounded-full border-2 border-[#E8542E]/20 border-t-[#E8542E]"
+        role="status"
+        aria-label="Loading"
+      />
+    </div>
+  )
+}
+
 const Dashboard = lazy(() => import('./pages/Dashboard').then((m) => ({ default: m.Dashboard })))
 const Participants = lazy(() => import('./pages/Participants').then((m) => ({ default: m.Participants })))
 const ParticipantDetail = lazy(() =>
@@ -31,7 +43,7 @@ const BillingSuccessPage = lazy(() =>
 function App() {
   return (
     <BrowserRouter>
-      <Suspense fallback={null}>
+      <Suspense fallback={<RouteLoadingFallback />}>
         <Routes>
           {/* Public routes — no practitioner gate, direct navigation. */}
           <Route path="/terms" element={<TermsPage />} />
