@@ -8,6 +8,7 @@ import { decodeResponsePayload } from '../lib/qrPayload'
 import { useEntitlement } from '../context/AuthContext'
 import { canUseProFeature } from '../../shared/entitlement'
 import { ProBadge, ProGate } from './ProGate'
+import { ProfessionalToolDisclaimer } from './ProfessionalToolDisclaimer'
 
 const ROLE_OPTIONS = ['Support worker', 'Parent', 'Sibling', 'Teacher', 'Other']
 
@@ -279,6 +280,7 @@ export function HandoffPanel({ behaviourId }: { behaviourId: string }) {
         </p>
         {!allowed && <ProBadge />}
       </div>
+      <ProfessionalToolDisclaimer />
       <GenerateInviteSection behaviourId={behaviourId} />
       <div>
         <h2 className="text-sm font-semibold text-[#111111] dark:text-white mb-2">Pending &amp; past invites</h2>

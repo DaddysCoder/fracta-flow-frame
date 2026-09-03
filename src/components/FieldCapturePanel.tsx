@@ -4,6 +4,7 @@ import QRCode from 'qrcode'
 import jsQR from 'jsqr'
 import { db } from '../lib/db'
 import { cancelFieldInvite, createFieldInvite, importFieldCaptureText } from '../lib/actions'
+import { ProfessionalToolDisclaimer } from './ProfessionalToolDisclaimer'
 
 const ROLE_OPTIONS = ['Support worker', 'Parent', 'Sibling', 'Teacher', 'Other']
 
@@ -120,6 +121,7 @@ export function FieldCapturePanel({ behaviourId }: { behaviourId: string }) {
           Someone on the floor logs an episode on their phone. You scan their code. It becomes an
           episode on this behaviour — same caseload, not a Field database.
         </p>
+        <ProfessionalToolDisclaimer className="mt-2" />
       </div>
 
       <div className="flex flex-wrap items-end gap-2">

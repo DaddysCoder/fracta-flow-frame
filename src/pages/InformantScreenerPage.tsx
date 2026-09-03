@@ -4,6 +4,7 @@ import QRCode from 'qrcode'
 import { SCREENER_DISPLAY_ITEMS, SCREENER_ITEMS } from '../lib/screener'
 import { encodeResponsePayload } from '../lib/qrPayload'
 import type { ScreenerAnswer, ScreenerResponse } from '../lib/types'
+import { ProfessionalToolDisclaimer } from '../components/ProfessionalToolDisclaimer'
 
 // Informant-facing standalone page (brief §4). No IndexedDB, no nav chrome,
 // no idea who the participant is or which clinical record this feeds —
@@ -105,6 +106,7 @@ export function InformantScreenerPage() {
             behaviour. This takes about 3 minutes. Nothing you enter is sent anywhere — when
             you're done you'll get a code to show back to the practitioner.
           </p>
+          <ProfessionalToolDisclaimer className="mt-2" />
         </div>
 
         <div className="space-y-3">

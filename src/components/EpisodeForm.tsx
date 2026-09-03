@@ -10,6 +10,7 @@ import {
 } from '../lib/scales'
 import type { AntecedentTag, ConsequenceTag, RiskFlagItem } from '../lib/types'
 import { WorkModeBar } from './WorkModeBar'
+import { ProfessionalToolDisclaimer } from './ProfessionalToolDisclaimer'
 
 type Step = 'when' | 'setting' | 'abc' | 'ratings' | 'risk'
 
@@ -270,6 +271,7 @@ export function EpisodeForm({ behaviourId }: { behaviourId: string }) {
               </label>
             ))}
           </div>
+          <ProfessionalToolDisclaimer className="mt-3" />
         </div>
       )}
 

@@ -10,6 +10,7 @@ import {
   SEVERITY_SCALE,
 } from '../lib/scales'
 import type { AntecedentTag, ConsequenceTag, RiskFlagItem } from '../lib/types'
+import { ProfessionalToolDisclaimer } from '../components/ProfessionalToolDisclaimer'
 
 function nowLocal(): string {
   const d = new Date()
@@ -149,6 +150,7 @@ export function FieldCapturePage() {
           <p className="text-sm text-slate-600 mt-1">
             You&apos;re logging as a {role}. This stays on your phone until you show the code.
           </p>
+          <ProfessionalToolDisclaimer className="mt-2" />
         </div>
 
         <label className="block text-sm font-medium">

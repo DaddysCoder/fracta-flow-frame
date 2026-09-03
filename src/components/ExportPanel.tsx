@@ -7,6 +7,7 @@ import type { DocumentationFormat } from '../lib/types'
 import { useEntitlement } from '../context/AuthContext'
 import { canUseProFeature } from '../../shared/entitlement'
 import { ProBadge, ProGate } from './ProGate'
+import { ProfessionalToolDisclaimer } from './ProfessionalToolDisclaimer'
 
 const FORMAT_OPTIONS: { value: DocumentationFormat; label: string; hint: string }[] = [
   {
@@ -91,6 +92,7 @@ export function ExportPanel({ participantId }: { participantId: string }) {
           <h2 className="text-sm font-semibold text-[#111111] dark:text-white">Generate documentation</h2>
           {!canUseProFeature('clinical_report', entitlement) && <ProBadge />}
         </div>
+        <ProfessionalToolDisclaimer />
 
         <div>
           <span className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
