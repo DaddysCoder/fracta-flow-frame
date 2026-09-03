@@ -7,6 +7,7 @@ import { usePractitioner, LOCAL_PRACTITIONER_ID } from '../lib/practitioner'
 import { SCREENER_DISPLAY_ITEMS, SCREENER_ITEMS, type ScreenerItem } from '../lib/screener'
 import { displayItemsForInstrument } from '../lib/vectorInstrument'
 import type { ScreenerAnswer } from '../lib/types'
+import { ProfessionalToolDisclaimer } from './ProfessionalToolDisclaimer'
 
 const FRAME_NATIVE = 'frame-native'
 
@@ -67,6 +68,7 @@ export function ScreenerForm({ behaviourId }: { behaviourId: string }) {
           here. QR handoff still uses Frame&apos;s built-in screener. Screening is never a
           determination of function on its own.
         </p>
+        <ProfessionalToolDisclaimer className="mt-2" />
       </div>
 
       <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">

@@ -250,6 +250,10 @@ export function renderDocumentationExport(input: RenderInput): string {
     generation time above — later changes to underlying records are not reflected here; generate a
     new export to capture them.
   </p>
+  <p class="meta">
+    Professional tool only. This resource supports, but does not replace, practitioner judgement,
+    appropriate assessment, organisational procedures or current regulatory requirements.
+  </p>
   ${input.behaviours.map(sectionRenderer).join('')}
 </body>
 </html>`

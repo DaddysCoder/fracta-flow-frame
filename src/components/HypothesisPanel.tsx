@@ -7,6 +7,7 @@ import type { AgreementStatus, ConfidenceLevel } from '../lib/types'
 import { useEntitlement } from '../context/AuthContext'
 import { canUseProFeature } from '../../shared/entitlement'
 import { ProBadge, ProGate } from './ProGate'
+import { ProfessionalToolDisclaimer } from './ProfessionalToolDisclaimer'
 
 const AGREEMENT_LABEL: Record<AgreementStatus, string> = {
   match: 'Match',
@@ -78,6 +79,7 @@ export function HypothesisPanel({ behaviourId }: { behaviourId: string }) {
       <div className="rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950 dark:border-amber-700 p-3 text-sm text-amber-900 dark:text-amber-100">
         {CAVEAT}
       </div>
+      <ProfessionalToolDisclaimer />
 
       {screenerCount === 0 && (
         <p className="text-sm text-slate-500">
